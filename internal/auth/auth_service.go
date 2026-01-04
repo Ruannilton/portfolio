@@ -21,8 +21,8 @@ type AuthService struct {
 }
 
 type RegisterLocalUserInput struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 }
@@ -38,13 +38,13 @@ type ForgotPasswordInput struct {
 
 type ResetPasswordInput struct {
 	Token       string `json:"token"`
-	NewPassword string `json:"new_password"`
+	NewPassword string `json:"newPassword"`
 }
 
 type GetUserResponse struct {
 	ID        string `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
 }
 
@@ -79,7 +79,7 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.Tok
 	store.Options.SameSite = http.SameSiteLaxMode
 
 	gothic.Store = store
-	appUrl := fmt.Sprintf("http://localhost:%s", appPort)
+	appUrl := fmt.Sprintf("http://localhost:%d", appPort)
 
 	goth.UseProviders(
 		google.New(googleClientID, googleClientSecret, appUrl+"/auth/google/callback", "email", "profile"),

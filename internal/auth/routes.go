@@ -7,6 +7,7 @@ import (
 	"portfolio/internal/jwt"
 
 	"github.com/markbates/goth/gothic"
+	"github.com/gorilla/mux"
 )
 
 type AuthModule struct {
@@ -21,20 +22,20 @@ func NewAuthModule(authService *AuthService, tokenService *jwt.TokenService) *Au
 	}
 }
 
-func (module *AuthModule) RegisterAuthRoutes() *http.ServeMux {
-	mux := http.NewServeMux()
+func (module *AuthModule) RegisterAuthRoutes() *mux.Router {
+	router := mux.NewRouter()
 
-	mux.HandleFunc("GET /auth/{provider}", module.beginOAuthHandler)
-	mux.HandleFunc("GET /auth/{provider}/callback", module.oAuthCallbackHandler)
-	mux.HandleFunc("GET /auth/logout", module.logoutHandler)
-	mux.HandleFunc("POST /auth/register", module.registerLocalUser)
-	mux.HandleFunc("POST /auth/login", module.loginLocalUser)
-	mux.HandleFunc("POST /auth/forgot-password", module.forgotPassword)
-	mux.HandleFunc("POST /auth/reset-password", module.resetPassword)
+	router.HandleFunc("/{provider}", module.beginOAuthHandler).Methods("GET")
+	router.HandleFunc("/{provider}/callback", module.oAuthCallbackHandler).Methods("GET")
+	router.HandleFunc("/logout", module.logoutHandler).Methods("GET")
+	router.HandleFunc("/register", module.registerLocalUser).Methods("POST")
+	router.HandleFunc("/login", module.loginLocalUser).Methods("POST")
+	router.HandleFunc("/forgot-password", module.forgotPassword).Methods("POST")
+	router.HandleFunc("/reset-password", module.resetPassword).Methods("POST")
 
-	mux.HandleFunc("GET /auth/me", jwt.AuthMiddleware(module.tokenService, module.me))
+	router.HandleFunc("/me", jwt.AuthMiddleware(module.tokenService, module.me)).Methods("GET")
 
-	return mux
+	return router
 }
 
 func (module *AuthModule) beginOAuthHandler(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +127,6 @@ func (module *AuthModule) loginLocalUser(w http.ResponseWriter, r *http.Request)
 		log.Printf("Failed to encode response: %v", err)
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (module *AuthModule) forgotPassword(w http.ResponseWriter, r *http.Request) {
@@ -182,5 +182,4 @@ func (module *AuthModule) me(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to encode response: %v", err)
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }

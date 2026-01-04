@@ -12,12 +12,15 @@ import (
 	"portfolio/internal/config"
 	"portfolio/internal/database"
 	"portfolio/internal/jwt"
+	"portfolio/internal/portfolio"
+	"github.com/gorilla/mux"
 )
 
 type Application struct {
 	config     config.Config
 	db         database.DbService
 	authModule *auth.AuthModule
+	porfolioModule *portfolio.PortfolioModule
 }
 
 func NewApplication() *Application {
@@ -36,20 +39,27 @@ func NewApplication() *Application {
 	userRepository := auth.NewUserRepository(db.GetDB())
 	authService := auth.NewAuthService(cfg, userRepository, jwtService)
 	authModule := auth.NewAuthModule(authService, jwtService)
+	
+	//portfolio
+	portfolioRepository := portfolio.NewProfileRepository(db.GetDB())
+	portfolioService := portfolio.NewPortfolioService(portfolioRepository)
+	porfolioModule := portfolio.NewPortfolioModule(portfolioService, jwtService)
 
 	app := &Application{
 		config:     *cfg,
 		db:         db,
 		authModule: authModule,
+		porfolioModule: porfolioModule,
 	}
 	return app
 }
 
 func (s *Application) RegisterRoutes() http.Handler {
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	mux.HandleFunc("/health", s.healthHandler)
-	mux.Handle("/", s.authModule.RegisterAuthRoutes())
+	mux.PathPrefix("/auth").Handler(http.StripPrefix("/auth",s.authModule.RegisterAuthRoutes()))
+	mux.PathPrefix("/portfolio").Handler(http.StripPrefix("/portfolio",s.porfolioModule.RegisterRoutes()))
 
 	return s.corsMiddleware(mux)
 }

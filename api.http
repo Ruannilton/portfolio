@@ -1,0 +1,195 @@
+@hostname = localhost
+@port = 8080
+@host = {{hostname}}:{{port}}
+@token = {{login.response.body.$.access_token}}
+
+### Saúde do Sistema
+GET http://{{host}}/health
+
+### Autenticação
+# Iniciar OAuth
+GET http://{{host}}/auth/{provider}
+
+###
+# Callback OAuth
+GET http://{{host}}/auth/{provider}/callback
+
+###
+# Logout
+GET http://{{host}}/auth/logout
+
+###
+# Registro Local
+POST http://{{host}}/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "admin@admin.com",
+  "password": "password123"
+}
+
+###
+# Login Local
+# @name login
+POST http://{{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "password123"
+}
+
+###
+# Esqueci Minha Senha
+POST http://{{host}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+###
+# Resetar Senha
+POST http://{{host}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "reset-token",
+  "newPassword": "newpassword123"
+}
+
+###
+# Informações do Usuário
+GET http://{{host}}/auth/me
+Authorization: Bearer {{token}}
+
+### Portfólio
+# Obter Meu Perfil
+GET http://{{host}}/portfolio/me
+Authorization: Bearer {{token}}
+
+###
+# Criar Perfil
+POST http://{{host}}/portfolio/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "headline": "Software Engineer",
+  "bio": "Experienced developer with a passion for building scalable applications.",
+  "seniority": "SENIOR",
+  "yearsOfExperience": 8,
+  "openToWork": true,
+  "salaryExpectation": 120000.00,
+  "currency": "USD",
+  "contractType": "FULL_TIME",
+  "location": "REMOTE",
+  "remoteOnly": true,
+  "skills": ["Go", "JavaScript", "Docker"],
+  "socialLinks": {
+    "linkedin": "https://linkedin.com/in/johndoe",
+    "github": "https://github.com/johndoe",
+    "website": "https://johndoe.dev"
+  },
+  "experiences": [
+    {
+      "company": "TechCorp",
+      "role": "Senior Developer",
+      "startDate": "2018-01-01T00:00:00Z",
+      "endDate": "2022-12-31T00:00:00Z",
+      "description": "Led the development of key projects and mentored junior developers.",
+      "techStack": ["Go", "Kubernetes", "AWS"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Portfolio Website",
+      "description": "A personal portfolio showcasing my projects and skills.",
+      "repoUrl": "https://github.com/johndoe/portfolio",
+      "liveUrl": "https://johndoe.dev",
+      "tags": ["React", "TailwindCSS"]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "University of Technology",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "startDate": "2010-09-01T00:00:00Z",
+      "endDate": "2014-06-30T00:00:00Z"
+    }
+  ]
+}
+
+###
+# Atualizar Perfil
+PUT http://{{host}}/portfolio/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "headline": "Software Engineer",
+  "bio": "Experienced developer with a passion for building scalable applications.",
+  "seniority": "SENIOR",
+  "yearsOfExperience": 8,
+  "openToWork": true,
+  "salaryExpectation": 120000.00,
+  "currency": "USD",
+  "contractType": "FULL_TIME",
+  "location": "REMOTE",
+  "remoteOnly": true,
+  "skills": ["Go", "JavaScript", "Docker"],
+  "socialLinks": {
+    "linkedin": "https://linkedin.com/in/johndoe",
+    "github": "https://github.com/johndoe",
+    "website": "https://johndoe.dev"
+  },
+  "experiences": [
+    {
+      "company": "TechCorp",
+      "role": "Senior Developer",
+      "startDate": "2018-01-01T00:00:00Z",
+      "endDate": "2022-12-31T00:00:00Z",
+      "description": "Led the development of key projects and mentored junior developers.",
+      "techStack": ["Go", "Kubernetes", "AWS"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Portfolio Website",
+      "description": "A personal portfolio showcasing my projects and skills.",
+      "repoUrl": "https://github.com/johndoe/portfolio",
+      "liveUrl": "https://johndoe.dev",
+      "tags": ["React", "TailwindCSS"]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "University of Technology",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "startDate": "2010-09-01T00:00:00Z",
+      "endDate": "2014-06-30T00:00:00Z"
+    }
+  ]
+}
+
+
+###
+# Atualizar Perfil
+PATCH http://{{host}}/portfolio/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "bio": "Updated Bio",
+  "skills": ["Go", "Python", "C#"]
+}
+
+
+###
+# Deletar Perfil
+DELETE http://{{host}}/portfolio/
+Authorization: Bearer {{token}}
