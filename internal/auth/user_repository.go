@@ -21,8 +21,8 @@ type userRepo struct {
 // Create implements [UserRepository].
 func (u *userRepo) Create(ctx context.Context, user *User) error {
 	query := `
-		INSERT INTO users (id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO users (id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 	_, err := u.db.ExecContext(ctx, query,
 		user.ID,
@@ -34,6 +34,7 @@ func (u *userRepo) Create(ctx context.Context, user *User) error {
 		user.ProviderID,
 		user.ResetToken,
 		user.CreatedAt,
+		user.ProfileImage,
 	)
 	return err
 }
@@ -41,7 +42,7 @@ func (u *userRepo) Create(ctx context.Context, user *User) error {
 // FindByEmail implements [UserRepository].
 func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
 		FROM users
 		WHERE email = $1
 		LIMIT 1
@@ -57,6 +58,7 @@ func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 		&user.ProviderID,
 		&user.ResetToken,
 		&user.CreatedAt,
+		&user.ProfileImage,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -72,8 +74,8 @@ func (u *userRepo) Save(ctx context.Context, user *User) error {
 	query := `
 		UPDATE users
 		SET first_name = $1, last_name = $2, email = $3, password_hash = $4, 
-		    provider = $5, provider_id = $6, reset_token = $7
-		WHERE id = $8
+		    provider = $5, provider_id = $6, reset_token = $7, profile_image = $8
+		WHERE id = $9
 	`
 	result, err := u.db.ExecContext(ctx, query,
 		user.FirstName,
@@ -83,6 +85,7 @@ func (u *userRepo) Save(ctx context.Context, user *User) error {
 		user.Provider,
 		user.ProviderID,
 		user.ResetToken,
+		user.ProfileImage,
 		user.ID,
 	)
 	if err != nil {
@@ -100,7 +103,7 @@ func (u *userRepo) Save(ctx context.Context, user *User) error {
 
 func (u *userRepo) FindByResetToken(ctx context.Context, token string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
 		FROM users
 		WHERE reset_token = $1
 		LIMIT 1
@@ -116,6 +119,7 @@ func (u *userRepo) FindByResetToken(ctx context.Context, token string) (*User, e
 		&user.ProviderID,
 		&user.ResetToken,
 		&user.CreatedAt,
+		&user.ProfileImage,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -129,7 +133,7 @@ func (u *userRepo) FindByResetToken(ctx context.Context, token string) (*User, e
 // FindByProviderID implements [UserRepository].
 func (u *userRepo) FindByProviderID(ctx context.Context, provider, providerID string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
 		FROM users
 		WHERE provider = $1 AND provider_id = $2
 		LIMIT 1
@@ -145,6 +149,7 @@ func (u *userRepo) FindByProviderID(ctx context.Context, provider, providerID st
 		&user.ProviderID,
 		&user.ResetToken,
 		&user.CreatedAt,
+		&user.ProfileImage,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

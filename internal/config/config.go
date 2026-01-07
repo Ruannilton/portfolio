@@ -26,6 +26,10 @@ type Config struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 
+	// GitHub OAuth
+	GithubClientID     string
+	GithubClientSecret string
+
 	// Session
 	SessionKey    string
 	SessionMaxAge int
@@ -55,6 +59,8 @@ func LoadConfig() (*Config, error) {
 		SessionMaxAge:      getEnvAsInt("SESSION_MAX_AGE", 86400),
 		JWTSecretKey:       getEnv("JWT_SECRET_KEY", ""),
 		JWTIssuer:          getEnv("JWT_ISSUER", ""),
+		GithubClientID:     getEnv("GITHUB_CLIENT_ID", ""),
+		GithubClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -103,6 +109,12 @@ func (c *Config) validate() error {
 		}
 		if c.SessionKey == "" || c.SessionKey == "your_session_key" {
 			errs = append(errs, errors.New("SESSION_KEY must be set to a secure value in production"))
+		}
+		if c.GithubClientID == "" {
+			errs = append(errs, errors.New("GITHUB_CLIENT_ID is required in production"))
+		}
+		if c.GithubClientSecret == "" {	
+			errs = append(errs, errors.New("GITHUB_CLIENT_SECRET is required in production"))
 		}
 	}
 

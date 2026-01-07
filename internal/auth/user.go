@@ -17,6 +17,7 @@ type User struct {
 	ProviderID   *string
 	ResetToken   *string
 	CreatedAt    time.Time
+	ProfileImage *string
 }
 
 func hashPassword(password string) (string, error) {
@@ -27,7 +28,7 @@ func hashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
-func NewLocalUser(firstName, lastName, email, password string) (*User, error) {
+func NewLocalUser(firstName, lastName, email, password string, profileImage *string) (*User, error) {
 	hash, err := hashPassword(password)
 
 	if err != nil {
@@ -43,10 +44,11 @@ func NewLocalUser(firstName, lastName, email, password string) (*User, error) {
 		PasswordHash: &passwordHash,
 		Provider:     "local",
 		CreatedAt:    time.Now(),
+		ProfileImage: profileImage,
 	}, nil
 }
 
-func NewProviderUser(firstName, lastName, email, provider, providerID string) *User {
+func NewProviderUser(firstName, lastName, email, provider, providerID string, profileImage *string) *User {
 	return &User{
 		ID:         uuid.New().String(),
 		FirstName:  firstName,
@@ -55,6 +57,7 @@ func NewProviderUser(firstName, lastName, email, provider, providerID string) *U
 		Provider:   provider,
 		ProviderID: &providerID,
 		CreatedAt:  time.Now(),
+		ProfileImage: profileImage,
 	}
 }
 

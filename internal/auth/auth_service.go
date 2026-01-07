@@ -4,20 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"portfolio/internal/config"
+	"portfolio/internal/jwt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/google"
-	"net/http"
-	"portfolio/internal/config"
-	"portfolio/internal/jwt"
 )
 
 type AuthService struct {
 	repo       UserRepository
-	jwtService  *jwt.JWTService
+	jwtService *jwt.JWTService
 }
 
 type RegisterLocalUserInput struct {
@@ -56,6 +59,10 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWT
 
 	googleClientID := cfg.GoogleClientID
 	googleClientSecret := cfg.GoogleClientSecret
+
+	githubClientID := cfg.GithubClientID
+	githubClientSecret := cfg.GithubClientSecret
+
 	key := cfg.SessionKey
 	maxAge := cfg.SessionMaxAge
 	isProduction := cfg.IsProduction
@@ -83,6 +90,7 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWT
 
 	goth.UseProviders(
 		google.New(googleClientID, googleClientSecret, appUrl+"/auth/google/callback", "email", "profile"),
+		github.New(githubClientID, githubClientSecret, appUrl+"/auth/github/callback", "read:user", "user:email"),
 	)
 
 	return &AuthService{
@@ -102,7 +110,7 @@ func (s *AuthService) RegisterLocalUser(ctx context.Context, input RegisterLocal
 		return ErrEmailAlreadyInUse
 	}
 
-	user, createErr := NewLocalUser(input.FirstName, input.LastName, input.Email, input.Password)
+	user, createErr := NewLocalUser(input.FirstName, input.LastName, input.Email, input.Password, nil)
 
 	if createErr != nil {
 		return createErr
@@ -171,6 +179,15 @@ func (s *AuthService) ResetPassword(ctx context.Context, input ResetPasswordInpu
 
 func (s *AuthService) CompleteOAuthLogin(ctx context.Context, gothUser goth.User) (*jwt.TokenResponse, error) {
 
+	// GitHub pode retornar apenas o Name. Se FirstName estiver vazio, tentamos extrair do Name.
+	if gothUser.FirstName == "" && gothUser.Name != "" {
+		parts := strings.SplitN(gothUser.Name, " ", 2)
+		gothUser.FirstName = parts[0]
+		if len(parts) > 1 {
+			gothUser.LastName = parts[1]
+		}
+	}
+
 	user, err := s.repo.FindByEmail(ctx, gothUser.Email)
 
 	if err != nil && !errors.Is(err, ErrUserNotFound) {
@@ -180,6 +197,7 @@ func (s *AuthService) CompleteOAuthLogin(ctx context.Context, gothUser goth.User
 	if user != nil {
 		user.Provider = gothUser.Provider
 		user.ProviderID = &gothUser.UserID
+		user.ProfileImage = &gothUser.AvatarURL
 
 		if saveErr := s.repo.Save(ctx, user); saveErr != nil {
 			return nil, saveErr
@@ -192,6 +210,7 @@ func (s *AuthService) CompleteOAuthLogin(ctx context.Context, gothUser goth.User
 			gothUser.Email,
 			gothUser.Provider,
 			gothUser.UserID,
+			&gothUser.AvatarURL,
 		)
 
 		if createErr := s.repo.Create(ctx, user); createErr != nil {
