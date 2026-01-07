@@ -17,7 +17,7 @@ import (
 
 type AuthService struct {
 	repo       UserRepository
-	jwtService *jwt.TokenService
+	jwtService  *jwt.JWTService
 }
 
 type RegisterLocalUserInput struct {
@@ -48,7 +48,7 @@ type GetUserResponse struct {
 	Email     string `json:"email"`
 }
 
-func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.TokenService) *AuthService {
+func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWTService) *AuthService {
 	envErr := godotenv.Load()
 	if envErr != nil {
 		panic("Failed to load .env file")
@@ -221,9 +221,9 @@ func (s *AuthService) Logout(res http.ResponseWriter, req *http.Request) error {
 
 func (s *AuthService) GetUserFromContext(ctx context.Context) (*User, error) {
 
-	userEmailValue := ctx.Value(jwt.UserEmailKey).(string)
+	loggedUser := jwt.GetUserCurrentUser(ctx)
 
-	user, err := s.repo.FindByEmail(ctx, userEmailValue)
+	user, err := s.repo.FindByEmail(ctx, loggedUser.UserEmail)
 
 	if err != nil {
 		return nil, err

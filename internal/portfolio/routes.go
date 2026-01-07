@@ -10,33 +10,34 @@ import (
 )
 
 type PortfolioModule struct {
-	service      *PortfolioService
-	tokenService *jwt.TokenService
+	service    *PortfolioService
+	jwtService *jwt.JWTService
 }
 
-func NewPortfolioModule(service *PortfolioService, tokenService *jwt.TokenService) *PortfolioModule {
+func NewPortfolioModule(service *PortfolioService, jwtService *jwt.JWTService) *PortfolioModule {
 	return &PortfolioModule{
-		service:      service,
-		tokenService: tokenService,
+		service:    service,
+		jwtService: jwtService,
 	}
 }
 
 func (module *PortfolioModule) RegisterRoutes() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/me", jwt.AuthMiddleware(module.tokenService, module.getMyProfile)).Methods("GET")
-	router.HandleFunc("/", jwt.AuthMiddleware(module.tokenService, module.createProfile)).Methods("POST")
-	router.HandleFunc("/", jwt.AuthMiddleware(module.tokenService, module.updateProfile)).Methods("PUT")
-	router.HandleFunc("/", jwt.AuthMiddleware(module.tokenService, module.patchProfile)).Methods("PATCH")
-	router.HandleFunc("/", jwt.AuthMiddleware(module.tokenService, module.deleteProfile)).Methods("DELETE")
+	router.HandleFunc("/me", module.jwtService.AuthMiddleware(module.getMyProfile)).Methods("GET")
+	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.createProfile)).Methods("POST")
+	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.updateProfile)).Methods("PUT")
+	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.patchProfile)).Methods("PATCH")
+	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.deleteProfile)).Methods("DELETE")
 
 	return router
 }
 
 func (module *PortfolioModule) getMyProfile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(jwt.UserIDKey).(string) // Assumindo que o AuthMiddleware injeta "user_id"
+	user := jwt.GetUserCurrentUser(r.Context())
+	userId := user.UserID
+	profile, err := module.service.GetMyProfile(r.Context(), userId)
 
-	profile, err := module.service.GetMyProfile(r.Context(), userID)
 	if err != nil {
 		if err == ErrProfileNotFound {
 			http.Error(w, "Profile not found", http.StatusNotFound)
@@ -52,7 +53,8 @@ func (module *PortfolioModule) getMyProfile(w http.ResponseWriter, r *http.Reque
 }
 
 func (module *PortfolioModule) createProfile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(jwt.UserIDKey).(string)
+	user := jwt.GetUserCurrentUser(r.Context())
+	userID := user.UserID
 
 	var input SaveProfileInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -78,7 +80,8 @@ func (module *PortfolioModule) createProfile(w http.ResponseWriter, r *http.Requ
 }
 
 func (module *PortfolioModule) updateProfile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(jwt.UserIDKey).(string)
+	user := jwt.GetUserCurrentUser(r.Context())
+	userID := user.UserID
 
 	var input SaveProfileInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -103,7 +106,8 @@ func (module *PortfolioModule) updateProfile(w http.ResponseWriter, r *http.Requ
 }
 
 func (module *PortfolioModule) patchProfile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(jwt.UserIDKey).(string)
+	user := jwt.GetUserCurrentUser(r.Context())
+	userID := user.UserID
 
 	var input PatchProfileDTO
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -128,7 +132,8 @@ func (module *PortfolioModule) patchProfile(w http.ResponseWriter, r *http.Reque
 }
 
 func (module *PortfolioModule) deleteProfile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(jwt.UserIDKey).(string)
+	user := jwt.GetUserCurrentUser(r.Context())
+	userID := user.UserID
 
 	if err := module.service.DeleteProfile(r.Context(), userID); err != nil {
 		if err == ErrProfileNotFound {

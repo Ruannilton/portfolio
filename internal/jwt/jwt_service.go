@@ -19,19 +19,23 @@ type GenerateTokenInput struct {
 	UserEmail string
 }
 
-type TokenService struct {
-	secretKey []byte
+type JWTService struct {
+		secretKey []byte
 	issuer    string
 }
 
-func NewJWTService(cfg *config.Config) *TokenService {
-	return &TokenService{
-		secretKey: []byte(cfg.JWTSecretKey),
-		issuer:    cfg.JWTIssuer,
+var (
+
+)
+
+func NewJWTService(cfg *config.Config) JWTService {
+	return JWTService{
+	secretKey  : []byte(cfg.JWTSecretKey),
+	issuer : cfg.JWTIssuer,
 	}
 }
 
-func (s *TokenService) GenerateToken(input *GenerateTokenInput) (*TokenResponse, error) {
+func (service *JWTService) GenerateToken(input *GenerateTokenInput) (*TokenResponse, error) {
 	accessDuration := time.Minute * 15
 	refreshDuration := time.Hour * 24 * 7 // 7 dias
 
@@ -43,10 +47,10 @@ func (s *TokenService) GenerateToken(input *GenerateTokenInput) (*TokenResponse,
 		"sub":   input.UserID,
 		"email": input.UserEmail,
 		"type":  "access",
-		"iss":   s.issuer,
+		"iss":   service.issuer,
 		"exp":   accessExp.Unix(),
 	}
-	accessTokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(s.secretKey)
+	accessTokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(service.secretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +58,10 @@ func (s *TokenService) GenerateToken(input *GenerateTokenInput) (*TokenResponse,
 	refreshClaims := jwt.MapClaims{
 		"sub":  input.UserID,
 		"type": "refresh",
-		"iss":  s.issuer,
+		"iss":  service.issuer,
 		"exp":  refreshExp.Unix(),
 	}
-	refreshTokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(s.secretKey)
+	refreshTokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(service.secretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -70,42 +74,3 @@ func (s *TokenService) GenerateToken(input *GenerateTokenInput) (*TokenResponse,
 	}, nil
 }
 
-func (s *TokenService) GetUserIDFromToken(tokenString string) (*string, error) {
-	token, err := parseToken(tokenString, s)
-	if err != nil {
-		return nil, err
-	}
-	return getClaimAsString(*token, "sub")
-}
-
-func (s *TokenService) GetUserEmailFromToken(tokenString string) (*string, error) {
-	token, err := parseToken(tokenString, s)
-	if err != nil {
-		return nil, err
-	}
-	return getClaimAsString(*token, "email")
-}
-
-func getClaimAsString(token jwt.Token, key string) (*string, error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, jwt.ErrSignatureInvalid
-	}
-
-	claim, ok := claims[key].(string)
-	if !ok {
-		return nil, jwt.ErrTokenInvalidSubject
-	}
-
-	return &claim, nil
-}
-
-func parseToken(tokenString string, s *TokenService) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.ErrSignatureInvalid
-		}
-		return s.secretKey, nil
-	})
-	return token, err
-}

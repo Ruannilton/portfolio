@@ -1,0 +1,69 @@
+{{ define "content" }}
+<div class="w-full">
+    <div class="flex flex-row justify-between items-center h-16 w-full  bg-gray-800 text-white px-4">
+        <div class="flex flex-row items-center gap-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-full"></div>
+            <h2 class="text-lg font-bold">{{ .FirstName }} {{ .LastName }}</h2>
+        </div>
+
+        <nav class="flex flex-row">
+            <button onclick="showSection('portfolio')" class="px-4 py-2 hover:bg-gray-700">Portfolio</button>
+            <!-- <button onclick="showSection('conversations')" class="px-4 py-2 hover:bg-gray-700">Conversas</button>
+            <button onclick="showSection('stats')" class="px-4 py-2 hover:bg-gray-700">Estatísticas</button> -->
+            <button onclick="logout()" class="px-4 py-2 hover:bg-gray-700">Logout</button>
+        </nav>
+    </div>
+
+    <div class="grid grid-cols-12 gap-3">
+        <div class="col-span-2"></div>
+        <div class="col-span-8">
+            <!-- Conteúdo Principal -->
+            <main class="flex-1 p-8">
+                <!-- Portfolio -->
+                <div id="portfolio">
+                    <h1 class="text-2xl font-bold">Meu Portfolio</h1>
+                    {{ template "portfolio" . }}
+                </div>
+
+                <!-- Conversas -->
+                <div id="conversations" class="hidden" hx-get="/conversations" hx-trigger="revealed" hx-swap="innerHTML">
+                    <h1 class="text-2xl font-bold">Conversas</h1>
+                    <p>Carregando conversas...</p>
+                </div>
+
+                <!-- Estatísticas -->
+                <div id="stats" class="hidden">
+                    <h1 class="text-2xl font-bold">Estatísticas</h1>
+                    <p>Dados estatísticos...</p>
+                </div>
+            </main>
+        </div>
+        <div class="col-span-2"></div>
+    </div>
+
+
+</div>
+</div>
+
+<script>
+    function logout() {
+        // Chama endpoint de logout e redireciona
+        fetch('/auth/logout', { method: 'GET' })
+            .finally(() => {
+                window.location.href = '/login';
+            });
+    }
+
+    function showSection(sectionId) {
+        const sections = ['portfolio', 'conversations', 'stats'];
+        sections.forEach(id => {
+            const section = document.getElementById(id);
+            if (id === sectionId) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        });
+    }
+</script>
+{{ end }}

@@ -13,14 +13,17 @@ import (
 	"portfolio/internal/database"
 	"portfolio/internal/jwt"
 	"portfolio/internal/portfolio"
+	"portfolio/internal/web"
+
 	"github.com/gorilla/mux"
 )
 
 type Application struct {
-	config     config.Config
-	db         database.DbService
-	authModule *auth.AuthModule
+	config         config.Config
+	db             database.DbService
+	authModule     *auth.AuthModule
 	porfolioModule *portfolio.PortfolioModule
+	webModule      *web.WebModule
 }
 
 func NewApplication() *Application {
@@ -37,31 +40,37 @@ func NewApplication() *Application {
 
 	// auth
 	userRepository := auth.NewUserRepository(db.GetDB())
-	authService := auth.NewAuthService(cfg, userRepository, jwtService)
-	authModule := auth.NewAuthModule(authService, jwtService)
-	
+	authService := auth.NewAuthService(cfg, userRepository, &jwtService)
+	authModule := auth.NewAuthModule(authService, &jwtService)
+
 	//portfolio
 	portfolioRepository := portfolio.NewProfileRepository(db.GetDB())
 	portfolioService := portfolio.NewPortfolioService(portfolioRepository)
-	porfolioModule := portfolio.NewPortfolioModule(portfolioService, jwtService)
+	porfolioModule := portfolio.NewPortfolioModule(portfolioService, &jwtService)
+
+	// web
+	webModule := web.NewWebModule(authService, &jwtService, portfolioService)
 
 	app := &Application{
-		config:     *cfg,
-		db:         db,
-		authModule: authModule,
+		config:         *cfg,
+		db:             db,
+		authModule:     authModule,
 		porfolioModule: porfolioModule,
+		webModule:      webModule,
 	}
 	return app
 }
 
 func (s *Application) RegisterRoutes() http.Handler {
-	mux := mux.NewRouter()
+	router := mux.NewRouter()
 
-	mux.HandleFunc("/health", s.healthHandler)
-	mux.PathPrefix("/auth").Handler(http.StripPrefix("/auth",s.authModule.RegisterAuthRoutes()))
-	mux.PathPrefix("/portfolio").Handler(http.StripPrefix("/portfolio",s.porfolioModule.RegisterRoutes()))
+	s.webModule.SetupFrontEnd(router)
 
-	return s.corsMiddleware(mux)
+	router.HandleFunc("/health", s.healthHandler)
+	router.PathPrefix("/auth").Handler(http.StripPrefix("/auth", s.authModule.RegisterAuthRoutes()))
+	router.PathPrefix("/portfolio").Handler(http.StripPrefix("/portfolio", s.porfolioModule.RegisterRoutes()))
+
+	return s.corsMiddleware(router)
 }
 
 func (app *Application) BuildHttpServer() *http.Server {
