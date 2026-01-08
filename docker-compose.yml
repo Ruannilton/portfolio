@@ -11,5 +11,17 @@ services:
     volumes:
       - psql_volume_bp:/var/lib/postgresql
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.10 
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: ${MEILI_ENV}
+    ports:
+      - "${MEILI_PORT}:7700"
+    volumes:
+      - meili_data:/meili_data
+
 volumes:
   psql_volume_bp:
+  meili_data:

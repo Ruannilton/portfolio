@@ -42,6 +42,9 @@ func (m *WebModule) SetupFrontEnd(router *mux.Router) {
 	router.HandleFunc("/portfolio/me/html", m.requireAuth(m.portfolioHTMLHandler)).Methods("GET")
 	router.HandleFunc("/portfolio/html", m.requireAuth(m.createPortfolioHTMLHandler)).Methods("POST")
 	router.HandleFunc("/portfolio/html", m.requireAuth(m.updatePortfolioHTMLHandler)).Methods("PUT")
+
+	// Rota pública para impressão/PDF do portfolio
+	router.HandleFunc("/portfolio/{user_id}/print", m.portfolioPrintHandler).Methods("GET")
 }
 
 func (m *WebModule) loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -138,4 +141,11 @@ func (m *WebModule) createPortfolioHTMLHandler(w http.ResponseWriter, r *http.Re
 func (m *WebModule) updatePortfolioHTMLHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	m.webService.UpdateAndRenderPortfolioHTML(ctx, w, r)
+}
+
+func (m *WebModule) portfolioPrintHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["user_id"]
+	ctx := r.Context()
+	m.webService.RenderPortfolioPrint(ctx, w, userID)
 }

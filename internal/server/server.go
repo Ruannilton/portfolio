@@ -13,6 +13,7 @@ import (
 	"portfolio/internal/database"
 	"portfolio/internal/jwt"
 	"portfolio/internal/portfolio"
+	"portfolio/internal/search"
 	"portfolio/internal/web"
 
 	"github.com/gorilla/mux"
@@ -32,6 +33,15 @@ func NewApplication() *Application {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
+	// meilisearch
+	searchService := search.NewSearchService(cfg)
+	
+	// Tenta configurar o índice ao iniciar (opcional, mas recomendado para criar filtros)
+	if err := searchService.ConfigureIndex(); err != nil {
+		log.Printf("Aviso: Falha ao configurar índice do Meilisearch: %v", err)
+		// Não damos Fatalf aqui para permitir que a app suba mesmo se o Meili estiver indisponível momentaneamente
+	}
+
 	// db
 	db := database.New(cfg)
 
@@ -45,7 +55,7 @@ func NewApplication() *Application {
 
 	//portfolio
 	portfolioRepository := portfolio.NewProfileRepository(db.GetDB())
-	portfolioService := portfolio.NewPortfolioService(portfolioRepository)
+	portfolioService := portfolio.NewPortfolioService(portfolioRepository,searchService)
 	porfolioModule := portfolio.NewPortfolioModule(portfolioService, &jwtService)
 
 	// web

@@ -37,6 +37,10 @@ type Config struct {
 	// JWT
 	JWTSecretKey string
 	JWTIssuer    string
+
+	// Meilisearch (NOVO)
+	MeiliHost      string
+	MeiliMasterKey string
 }
 
 func LoadConfig() (*Config, error) {
@@ -61,6 +65,9 @@ func LoadConfig() (*Config, error) {
 		JWTIssuer:          getEnv("JWT_ISSUER", ""),
 		GithubClientID:     getEnv("GITHUB_CLIENT_ID", ""),
 		GithubClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
+		// Configurações do Meilisearch
+		MeiliHost:      getEnv("MEILI_HOST", "http://localhost:7700"),
+		MeiliMasterKey: getEnv("MEILI_MASTER_KEY", ""),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -99,6 +106,16 @@ func (c *Config) validate() error {
 		errs = append(errs, errors.New("JWT_ISSUER is required"))
 	}
 
+	// Validação do Meilisearch
+	if c.MeiliHost == "" {
+		errs = append(errs, errors.New("MEILI_HOST is required"))
+	}
+	// Em produção, a Master Key é crítica. Em dev, pode ser opcional dependendo do setup,
+	// mas como definimos no docker-compose, vamos exigir sempre.
+	if c.MeiliMasterKey == "" {
+		errs = append(errs, errors.New("MEILI_MASTER_KEY is required"))
+	}
+
 	// Validações de OAuth (obrigatórias em produção)
 	if c.IsProduction {
 		if c.GoogleClientID == "" {
@@ -113,7 +130,7 @@ func (c *Config) validate() error {
 		if c.GithubClientID == "" {
 			errs = append(errs, errors.New("GITHUB_CLIENT_ID is required in production"))
 		}
-		if c.GithubClientSecret == "" {	
+		if c.GithubClientSecret == "" {
 			errs = append(errs, errors.New("GITHUB_CLIENT_SECRET is required in production"))
 		}
 	}
@@ -125,6 +142,7 @@ func (c *Config) validate() error {
 	return nil
 }
 
+// ... (Restante das funções getEnv mantidas iguais) ...
 // getEnv retorna o valor da variável de ambiente ou um valor padrão
 func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {

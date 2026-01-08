@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 )
 
 type UserRepository interface {
@@ -20,6 +21,7 @@ type userRepo struct {
 
 // Create implements [UserRepository].
 func (u *userRepo) Create(ctx context.Context, user *User) error {
+	user.Email = strings.ToLower(user.Email)
 	query := `
 		INSERT INTO users (id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -41,6 +43,7 @@ func (u *userRepo) Create(ctx context.Context, user *User) error {
 
 // FindByEmail implements [UserRepository].
 func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error) {
+	email = strings.ToLower(email)
 	query := `
 		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
 		FROM users
@@ -71,6 +74,7 @@ func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 
 // Save implements [UserRepository].
 func (u *userRepo) Save(ctx context.Context, user *User) error {
+	user.Email = strings.ToLower(user.Email)
 	query := `
 		UPDATE users
 		SET first_name = $1, last_name = $2, email = $3, password_hash = $4, 

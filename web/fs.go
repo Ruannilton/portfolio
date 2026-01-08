@@ -60,6 +60,9 @@ var templateFuncs = template.FuncMap{
 		}
 		return l
 	},
+	"currentDate": func() string {
+		return time.Now().Format("02/01/2006")
+	},
 }
 
 // GetStaticAssets retorna um FileSystem pronto para ser servido via HTTP

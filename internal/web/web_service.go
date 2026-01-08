@@ -143,3 +143,26 @@ func (module *WebService) renderProfileContent(w http.ResponseWriter, profile *p
 	}
 	tmpl.ExecuteTemplate(w, "portfolio_content", profile)
 }
+
+// RenderPortfolioPrint renderiza a versão para impressão/PDF do portfolio (endpoint público)
+func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, userID string) {
+	profile, err := module.portfolioService.GetMyProfile(ctx, userID)
+	if err != nil {
+		if errors.Is(err, portfolio.ErrProfileNotFound) {
+			http.Error(w, "Portfolio não encontrado", http.StatusNotFound)
+			return
+		}
+		log.Printf("RenderPortfolioPrint error: %v", err)
+		http.Error(w, "Falha ao carregar portfolio", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tmpl, err := web.ParseTemplateFragment("components/portfolio_print.html")
+	if err != nil {
+		log.Printf("Error parsing portfolio_print template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+	tmpl.ExecuteTemplate(w, "portfolio_print", profile)
+}
