@@ -113,27 +113,24 @@ func (s *PortfolioService) mapInputToProfile(p *Profile, input SaveProfileInput)
 }
 
 func mapProfileToSearchDTO(p *Profile) search.ProfileSearchDTO {
+	skills := make([]string, len(p.Skills))
+	copy(skills, p.Skills)
+
+	for _, project := range p.Projects {
+		skills = append(skills, project.Tags...)
+	}
+
 	return search.ProfileSearchDTO{
 		ID:                p.ID,
 		Headline:          p.Headline,
 		Bio:               p.Bio,
-		Skills:            p.Skills,
-		Seniority:         string(p.Seniority),
+		Skills:            skills,
+		Seniority:         p.Seniority.Int(),
 		YearsOfExp:        p.YearsOfExp,
-		Location:          string(p.Location),
-		RemoteOnly:        p.RemoteOnly,
+		Location:          p.Location.Int(),
 		OpenToWork:        p.OpenToWork,
 		ContractType:      p.ContractType,
 		Currency:          p.Currency,
 		SalaryExpectation: p.SalaryExpectation,
-		ProjectTags:       mapProjectTags(p.Projects),
 	}
-}
-
-func mapProjectTags(projects Projects) []string {
-	tags := make([]string, 0)
-	for _, project := range projects {
-		tags = append(tags, project.Tags...)
-	}
-	return tags
 }

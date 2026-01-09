@@ -29,6 +29,11 @@ const (
 	LocationAny    LocationType = "ANY"
 )
 
+
+
+// Structs
+
+
 type Profile struct {
 	ID                string       `json:"id"`
 	UserID            string       `json:"userId"`
@@ -201,5 +206,37 @@ func (p *Profile) Update(dto PatchProfileDTO) {
 func updateIfNotNil[T any](target *T, source *T) {
 	if source != nil {
 		*target = *source
+	}
+}
+
+func (s Seniority) Int() int {
+	switch s {
+	case Junior:
+		return 1
+	case MidLevel:
+		return 2
+	case Senior:
+		return 3
+	case Lead:
+		return 4
+	case Principal:
+		return 5
+	default:
+		return 0
+	}
+}
+
+func (l LocationType) Int() int {
+	switch l {
+	case LocationOnSite:
+		return 1
+	case LocationRemote:
+		return 2
+	case LocationHybrid:
+		return 3
+	case LocationAny:
+		return 4
+	default:
+		return 0
 	}
 }
