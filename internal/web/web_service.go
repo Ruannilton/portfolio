@@ -10,18 +10,50 @@ import (
 	"portfolio/internal/auth"
 	"portfolio/internal/jwt"
 	"portfolio/internal/portfolio"
+	"portfolio/internal/search"
 	"portfolio/web"
 )
 
 type WebService struct {
 	authService      *auth.AuthService
 	portfolioService *portfolio.PortfolioService
+	searchService    search.SearchService
 }
 
-func NewWebService(authService *auth.AuthService, portfolioService *portfolio.PortfolioService) *WebService {
+func (module *WebService) RenderSearchPage(w http.ResponseWriter) error {
+	tmpl, err := web.ParseTemplate("pages/search_page.html", "profile_search_query_builder_form.html")
+	if err != nil {
+		log.Printf("Error parsing search page template: %v", err)
+		return err
+	}
+	return tmpl.ExecuteTemplate(w, "base", nil)
+}
+
+func (module *WebService) RenderPortfolioSearchResults(ctx context.Context, w http.ResponseWriter, query search.ProfileSearchQueryBuilder) error {
+	searchResult, err := module.searchService.SearchProfiles(&query)
+
+	if err != nil {
+		log.Printf("RenderPortfolioSearchResults error: %v", err)
+		http.Error(w, "Failed to search profiles", http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tmpl, err := web.ParseTemplateFragment("components/profile_search_response_card.html")
+	if err != nil {
+		log.Printf("Error parsing search results template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return err
+	}
+
+	return tmpl.ExecuteTemplate(w, "profile_search_results", searchResult)
+}
+
+func NewWebService(authService *auth.AuthService, portfolioService *portfolio.PortfolioService, searchService search.SearchService) *WebService {
 	return &WebService{
 		authService:      authService,
 		portfolioService: portfolioService,
+		searchService:    searchService,
 	}
 }
 
@@ -53,9 +85,58 @@ func (module *WebService) RenderAppPage(ctx context.Context, w io.Writer) error 
 	return nil
 }
 
+// RenderPublicProfilePage renderiza a página pública de visualização de um perfil (sem autenticação)
+func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.ResponseWriter, profileID string) {
+	// Busca o perfil pelo ID
+	profile, err := module.portfolioService.GetProfile(ctx, profileID)
+	if err != nil {
+		if errors.Is(err, portfolio.ErrProfileNotFound) {
+			http.Error(w, "Perfil não encontrado", http.StatusNotFound)
+			return
+		}
+		log.Printf("RenderPublicProfilePage error: %v", err)
+		http.Error(w, "Falha ao carregar perfil", http.StatusInternalServerError)
+		return
+	}
+
+	// Busca os dados do usuário dono do perfil
+	user, err := module.authService.GetUserByID(ctx, profile.UserID)
+	if err != nil {
+		log.Printf("RenderPublicProfilePage error fetching user: %v", err)
+		http.Error(w, "Falha ao carregar dados do usuário", http.StatusInternalServerError)
+		return
+	}
+
+	// Monta o DTO para a view
+	profileImage := ""
+	if user.ProfileImage != nil {
+		profileImage = *user.ProfileImage
+	}
+
+	viewData := PublicProfileView{
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		ProfileImage: profileImage,
+		Profile:      profile,
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tmpl, err := web.ParseTemplate("pages/public_profile.html", "read_only_portfolio_content.html")
+	if err != nil {
+		log.Printf("Error parsing public_profile template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+	tmpl.ExecuteTemplate(w, "base", viewData)
+}
+
 // ==================== Portfolio HTML Rendering ====================
 
-func (module *WebService) RenderPortfolioHTML(ctx context.Context, w http.ResponseWriter) {
+func (module *WebService) RenderPortfolioHTML(ctx context.Context, w http.ResponseWriter, userID string) {
+
+}
+
+func (module *WebService) RenderEditablePortfolioHTML(ctx context.Context, w http.ResponseWriter) {
 	user := jwt.GetUserCurrentUser(ctx)
 	userID := user.UserID
 

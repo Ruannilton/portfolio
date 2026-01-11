@@ -3,13 +3,15 @@ package portfolio
 import (
 	"context"
 	"errors"
+	"portfolio/internal/auth"
 	"portfolio/internal/search"
 	"time"
 )
 
 type PortfolioService struct {
-	repo ProfileRepository
-	search  search.SearchService
+	repo     ProfileRepository
+	search   search.SearchService
+	userRepo auth.UserRepository
 }
 
 type SaveProfileInput struct {
@@ -30,12 +32,20 @@ type SaveProfileInput struct {
 	Educations        Educations   `json:"educations"`
 }
 
-func NewPortfolioService(repo ProfileRepository,search  search.SearchService) *PortfolioService {
-	return &PortfolioService{repo: repo, search: search}
+func NewPortfolioService(repo ProfileRepository, search search.SearchService, userRepo auth.UserRepository) *PortfolioService {
+	return &PortfolioService{repo: repo, search: search, userRepo: userRepo}
 }
 
 func (s *PortfolioService) GetMyProfile(ctx context.Context, userID string) (*Profile, error) {
 	return s.repo.FindByUserID(ctx, userID)
+}
+
+func (s *PortfolioService) GetProfile(ctx context.Context, profileID string) (*Profile, error) {
+	return s.repo.Find(ctx, profileID)
+}
+
+func (s *PortfolioService) ListProfiles(ctx context.Context, profileIDs []string) ([]*Profile, error) {
+	return s.repo.List(ctx, profileIDs)
 }
 
 func (s *PortfolioService) CreateProfile(ctx context.Context, userID string, input SaveProfileInput) (*Profile, error) {
@@ -54,7 +64,8 @@ func (s *PortfolioService) CreateProfile(ctx context.Context, userID string, inp
 	if err := s.repo.Create(ctx, profile); err != nil {
 		return nil, err
 	}
-	go s.search.IndexProfile(mapProfileToSearchDTO(profile))
+
+	go s.sendToIndexing(profile, userID)
 	return profile, nil
 }
 
@@ -70,7 +81,7 @@ func (s *PortfolioService) UpdateProfile(ctx context.Context, userID string, inp
 	if err := s.repo.Update(ctx, profile); err != nil {
 		return nil, err
 	}
-	go s.search.IndexProfile(mapProfileToSearchDTO(profile))
+	go s.sendToIndexing(profile, userID)
 	return profile, nil
 }
 
@@ -84,7 +95,7 @@ func (s *PortfolioService) PatchProfile(ctx context.Context, userID string, inpu
 	if err := s.repo.Update(ctx, profile); err != nil {
 		return nil, err
 	}
-	go s.search.IndexProfile(mapProfileToSearchDTO(profile))
+	go s.sendToIndexing(profile, userID)
 	return profile, nil
 }
 
@@ -112,16 +123,25 @@ func (s *PortfolioService) mapInputToProfile(p *Profile, input SaveProfileInput)
 	p.Educations = input.Educations
 }
 
-func mapProfileToSearchDTO(p *Profile) search.ProfileSearchDTO {
+func (s *PortfolioService) sendToIndexing(p *Profile, userId string) {
+
+	user, err := s.userRepo.Find(context.Background(), userId)
+	if err != nil {
+		return
+	}
 	skills := make([]string, len(p.Skills))
 	copy(skills, p.Skills)
 
 	for _, project := range p.Projects {
 		skills = append(skills, project.Tags...)
 	}
-
-	return search.ProfileSearchDTO{
-		ID:                p.ID,
+	userName := user.FirstName + " " + user.LastName
+	profileImg := ""
+	if user.ProfileImage != nil {
+		profileImg = *user.ProfileImage
+	}
+	dto := search.ProfileSearchDTO{
+		ProfileId:         p.ID,
 		Headline:          p.Headline,
 		Bio:               p.Bio,
 		Skills:            skills,
@@ -132,5 +152,9 @@ func mapProfileToSearchDTO(p *Profile) search.ProfileSearchDTO {
 		ContractType:      p.ContractType,
 		Currency:          p.Currency,
 		SalaryExpectation: p.SalaryExpectation,
+		UserName:          userName,
+		UserProfileImage:  profileImg,
+		RemoteOnly:        p.RemoteOnly,
 	}
+	s.search.IndexProfile(dto)
 }

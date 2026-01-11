@@ -250,3 +250,8 @@ func (s *AuthService) GetUserFromContext(ctx context.Context) (*User, error) {
 
 	return user, nil
 }
+
+// GetUserByID busca um usuário pelo ID
+func (s *AuthService) GetUserByID(ctx context.Context, userID string) (*User, error) {
+	return s.repo.Find(ctx, userID)
+}

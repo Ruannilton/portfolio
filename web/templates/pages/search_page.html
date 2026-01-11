@@ -1,0 +1,36 @@
+{{ define "content" }}
+<div class="w-full min-h-screen bg-gray-100">
+    <!-- Header -->
+    <div class="flex flex-row justify-between items-center h-16 w-full bg-gray-800 text-white px-6 shadow-md">
+        <a href="/app" class="text-xl font-bold hover:text-gray-300">DevPortfolio</a>
+        <h1 class="text-lg font-semibold">Buscar Profissionais</h1>
+        <div></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Sidebar com filtros -->
+            <div class="col-span-12 md:col-span-3">
+                {{ template "profile_search_query_builder_form" . }}
+            </div>
+
+            <!-- Área de resultados -->
+            <div class="col-span-12 md:col-span-9">
+                <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-semibold text-gray-800">Resultados</h2>
+                        <span id="results-count" class="text-sm text-gray-500"></span>
+                    </div>
+                </div>
+
+                <!-- Container dos resultados -->
+                <div id="search-results" 
+                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Resultados serão carregados aqui via HTMX após a busca -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

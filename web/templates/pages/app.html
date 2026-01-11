@@ -16,6 +16,7 @@
 
         <nav class="flex flex-row">
             <button onclick="showSection('portfolio')" class="px-4 py-2 hover:bg-gray-700">Portfolio</button>
+            <button onclick="redirectToSearch()" class="px-4 py-2 hover:bg-gray-700">Buscar</button>
             <!-- <button onclick="showSection('conversations')" class="px-4 py-2 hover:bg-gray-700">Conversas</button>
             <button onclick="showSection('stats')" class="px-4 py-2 hover:bg-gray-700">Estatísticas</button> -->
             <button onclick="logout()" class="px-4 py-2 hover:bg-gray-700">Logout</button>
@@ -72,6 +73,9 @@
 </div>
 
 <script>
+    function redirectToSearch() {
+        window.location.href = '/search';
+    }
     function logout() {
         // Chama endpoint de logout e redireciona
         fetch('/auth/logout', { method: 'GET' })

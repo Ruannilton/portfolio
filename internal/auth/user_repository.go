@@ -9,6 +9,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *User) error
+	Find(ctx context.Context, userID string) (*User, error)
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	FindByResetToken(ctx context.Context, token string) (*User, error)
 	FindByProviderID(ctx context.Context, provider, providerID string) (*User, error)
@@ -52,6 +53,36 @@ func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 	`
 	user := &User{}
 	err := u.db.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Provider,
+		&user.ProviderID,
+		&user.ResetToken,
+		&user.CreatedAt,
+		&user.ProfileImage,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+func (u *userRepo) Find(ctx context.Context, id string) (*User, error) {
+	
+	query := `
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
+		FROM users
+		WHERE id = $1
+		LIMIT 1
+	`
+	user := &User{}
+	err := u.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.FirstName,
 		&user.LastName,

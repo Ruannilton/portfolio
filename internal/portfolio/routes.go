@@ -25,6 +25,7 @@ func (module *PortfolioModule) RegisterRoutes() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/me", module.jwtService.AuthMiddleware(module.getMyProfile)).Methods("GET")
+	//router.HandleFunc("/{portfolioId}", module.jwtService.AuthMiddleware(module.getProfile)).Methods("GET")
 	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.createProfile)).Methods("POST")
 	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.updateProfile)).Methods("PUT")
 	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.patchProfile)).Methods("PATCH")
@@ -50,6 +51,27 @@ func (module *PortfolioModule) getMyProfile(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profile)
+}
+
+func (module *PortfolioModule) getProfile(w http.ResponseWriter, r *http.Request){
+	vars := mux.Vars(r)
+	profileID := vars["portfolioId"]
+
+	profile, err := module.service.GetProfile(r.Context(), profileID)
+
+	if err != nil {
+		if err == ErrProfileNotFound {
+			http.Error(w, "Profile not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("GetProfile error: %v", err)
+		http.Error(w, "Failed to get profile", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(profile)
+
 }
 
 func (module *PortfolioModule) createProfile(w http.ResponseWriter, r *http.Request) {

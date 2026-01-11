@@ -6,6 +6,7 @@ import (
 	"portfolio/internal/auth"
 	"portfolio/internal/jwt"
 	"portfolio/internal/portfolio"
+	"portfolio/internal/search"
 	"portfolio/web"
 	"strings"
 
@@ -19,12 +20,13 @@ type WebModule struct {
 	webService       *WebService
 }
 
-func NewWebModule(authService *auth.AuthService, jwtService *jwt.JWTService, portfolioService *portfolio.PortfolioService) *WebModule {
+func NewWebModule(authService *auth.AuthService, jwtService *jwt.JWTService, portfolioService *portfolio.PortfolioService, searchService search.SearchService) *WebModule {
 	return &WebModule{
 		authService:      authService,
 		jwtService:       jwtService,
 		portfolioService: portfolioService,
-		webService:       NewWebService(authService, portfolioService),
+
+		webService: NewWebService(authService, portfolioService, searchService),
 	}
 }
 
@@ -38,13 +40,22 @@ func (m *WebModule) SetupFrontEnd(router *mux.Router) {
 	// Página do App (protegida)
 	router.HandleFunc("/app", m.requireAuth(m.appHandler)).Methods("GET")
 
+	// Página de Busca
+	router.HandleFunc("/search", m.searchPageHandler).Methods("GET")
+
+	// Página pública de visualização de perfil
+	router.HandleFunc("/profile/{profile_id}", m.publicProfileHandler).Methods("GET")
+
 	// Rotas HTML do Portfolio (HTMX)
-	router.HandleFunc("/portfolio/me/html", m.requireAuth(m.portfolioHTMLHandler)).Methods("GET")
+	router.HandleFunc("/portfolio/me/html", m.requireAuth(m.editablePortfolioHTMLHandler)).Methods("GET")
 	router.HandleFunc("/portfolio/html", m.requireAuth(m.createPortfolioHTMLHandler)).Methods("POST")
 	router.HandleFunc("/portfolio/html", m.requireAuth(m.updatePortfolioHTMLHandler)).Methods("PUT")
 
 	// Rota pública para impressão/PDF do portfolio
 	router.HandleFunc("/portfolio/{user_id}/print", m.portfolioPrintHandler).Methods("GET")
+	router.HandleFunc("/portfolio/{user_id}/html", m.portfolioPrintHandler).Methods("GET")
+	// Rota de busca de portfolios (retorna fragmento HTML)
+	router.HandleFunc("/portfolio/search", m.portfolioSearchHandler).Methods("GET")
 }
 
 func (m *WebModule) loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -128,9 +139,16 @@ func (m *WebModule) getAutenticatedUserFromRequest(r *http.Request) *jwt.Autenti
 
 // ==================== Portfolio HTML Handlers ====================
 
+func (m *WebModule) editablePortfolioHTMLHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	m.webService.RenderEditablePortfolioHTML(ctx, w)
+}
+
 func (m *WebModule) portfolioHTMLHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	m.webService.RenderPortfolioHTML(ctx, w)
+	vars := mux.Vars(r)
+	userID := vars["user_id"]
+	m.webService.RenderPortfolioHTML(ctx, w, userID)
 }
 
 func (m *WebModule) createPortfolioHTMLHandler(w http.ResponseWriter, r *http.Request) {
@@ -148,4 +166,21 @@ func (m *WebModule) portfolioPrintHandler(w http.ResponseWriter, r *http.Request
 	userID := vars["user_id"]
 	ctx := r.Context()
 	m.webService.RenderPortfolioPrint(ctx, w, userID)
+}
+
+func (m *WebModule) publicProfileHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	profileID := vars["profile_id"]
+	ctx := r.Context()
+	m.webService.RenderPublicProfilePage(ctx, w, profileID)
+}
+
+func (m *WebModule) searchPageHandler(w http.ResponseWriter, r *http.Request) {
+	m.webService.RenderSearchPage(w)
+}
+
+func (m *WebModule) portfolioSearchHandler(w http.ResponseWriter, r *http.Request) {
+	searchQuery := extractSearchForm(r)
+	ctx := r.Context()
+	m.webService.RenderPortfolioSearchResults(ctx, w, searchQuery)
 }

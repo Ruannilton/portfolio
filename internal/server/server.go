@@ -35,7 +35,7 @@ func NewApplication() *Application {
 
 	// meilisearch
 	searchService := search.NewSearchService(cfg)
-	
+
 	// Tenta configurar o índice ao iniciar (opcional, mas recomendado para criar filtros)
 	if err := searchService.ConfigureIndex(); err != nil {
 		log.Printf("Aviso: Falha ao configurar índice do Meilisearch: %v", err)
@@ -55,11 +55,11 @@ func NewApplication() *Application {
 
 	//portfolio
 	portfolioRepository := portfolio.NewProfileRepository(db.GetDB())
-	portfolioService := portfolio.NewPortfolioService(portfolioRepository,searchService)
+	portfolioService := portfolio.NewPortfolioService(portfolioRepository, searchService, userRepository)
 	porfolioModule := portfolio.NewPortfolioModule(portfolioService, &jwtService)
 
 	// web
-	webModule := web.NewWebModule(authService, &jwtService, portfolioService)
+	webModule := web.NewWebModule(authService, &jwtService, portfolioService, searchService)
 
 	app := &Application{
 		config:         *cfg,

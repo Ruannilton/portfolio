@@ -1,184 +1,54 @@
 package search
 
 import (
-	"fmt"
 	"log"
 	"portfolio/internal/config"
-	"strings"
 
 	"github.com/meilisearch/meilisearch-go"
 )
 
 type ProfileSearchDTO struct {
-	ID                string   `json:"id"`
+	ProfileId         string   `json:"profileId"`
+	UserName          string   `json:"username"`
+	UserProfileImage  string   `json:"userProfileImage"`
 	Headline          string   `json:"headline"`
 	Bio               string   `json:"bio"`
 	Skills            []string `json:"skills"`
 	Seniority         int      `json:"seniority"`
-	YearsOfExp        int      `json:"years_of_experience"`
+	YearsOfExp        int      `json:"yearsOfExperience"`
 	Location          int      `json:"location"`
-	OpenToWork        bool     `json:"open_to_work"`
-	ContractType      string   `json:"contract_type"`
+	OpenToWork        bool     `json:"openToWork"`
+	ContractType      string   `json:"contractType"`
 	Currency          string   `json:"currency"`
-	SalaryExpectation float64  `json:"salary_expectation"`
+	SalaryExpectation float64  `json:"salaryExpectation"`
+	RemoteOnly        bool     `json:"remoteOnly"`
 }
 
-type ProfileSearchQueryBuilder struct {
-	keyWords     []string
-	skills       []string
-	seniority    []int
-	location     []int
-	remoteOnly   *bool
-	openToWork   *bool
-	contractType []string
-	minYearsExp  *int
-	maxYearsExp  *int
-	minSalary    *float64
-	maxSalary    *float64
+type ProfileSearchResponseDTO struct {
+	ProfileId        string   `json:"profileId"`
+	UserName         string   `json:"username"`
+	UserProfileImage string   `json:"userProfileImage"`
+	Headline         string   `json:"headline"`
+	Seniority        int      `json:"seniority"`
+	Skills           []string `json:"skills"`
+	Location         int      `json:"location"`
 }
 
-// NewProfileSearchQueryBuilder creates a new query builder
-func NewProfileSearchQueryBuilder() *ProfileSearchQueryBuilder {
-	return &ProfileSearchQueryBuilder{}
+type ProfileSearchResponse struct {
+	TotalHits int64
+	Hits      []ProfileSearchResponseDTO
 }
 
-// WithKeyWords sets the keywords for full-text search
-func (b *ProfileSearchQueryBuilder) WithKeyWords(keywords ...string) *ProfileSearchQueryBuilder {
-	b.keyWords = keywords
-	return b
-}
-
-// WithSkills filters by skills (OR condition)
-func (b *ProfileSearchQueryBuilder) WithSkills(skills ...string) *ProfileSearchQueryBuilder {
-	b.skills = skills
-	return b
-}
-
-// WithSeniority filters by seniority levels (OR condition)
-func (b *ProfileSearchQueryBuilder) WithSeniority(seniority ...int) *ProfileSearchQueryBuilder {
-	b.seniority = seniority
-	return b
-}
-
-// WithLocation filters by location (OR condition)
-func (b *ProfileSearchQueryBuilder) WithLocation(location ...int) *ProfileSearchQueryBuilder {
-	b.location = location
-	return b
-}
-
-// WithRemoteOnly filters by remote_only flag
-func (b *ProfileSearchQueryBuilder) WithRemoteOnly(remoteOnly bool) *ProfileSearchQueryBuilder {
-	b.remoteOnly = &remoteOnly
-	return b
-}
-
-// WithOpenToWork filters by open_to_work flag
-func (b *ProfileSearchQueryBuilder) WithOpenToWork(openToWork bool) *ProfileSearchQueryBuilder {
-	b.openToWork = &openToWork
-	return b
-}
-
-// WithContractType filters by contract types (OR condition)
-func (b *ProfileSearchQueryBuilder) WithContractType(contractType ...string) *ProfileSearchQueryBuilder {
-	b.contractType = contractType
-	return b
-}
-
-// WithYearsOfExperience sets the range for years of experience
-func (b *ProfileSearchQueryBuilder) WithYearsOfExperience(min, max *int) *ProfileSearchQueryBuilder {
-	b.minYearsExp = min
-	b.maxYearsExp = max
-	return b
-}
-
-// WithSalaryRange sets the salary range filter
-func (b *ProfileSearchQueryBuilder) WithSalaryRange(min, max *float64) *ProfileSearchQueryBuilder {
-	b.minSalary = min
-	b.maxSalary = max
-	return b
-}
-
-// BuildQuery returns the full-text search query string
-func (b *ProfileSearchQueryBuilder) BuildQuery() string {
-	return strings.Join(b.keyWords, " ")
-}
-
-// BuildFilter constructs the Meilisearch filter string
-func (b *ProfileSearchQueryBuilder) BuildFilter() string {
-	var filters []string
-
-	// Skills (OR between skills)
-	if len(b.skills) > 0 {
-		skillFilters := make([]string, len(b.skills))
-		for i, skill := range b.skills {
-			skillFilters[i] = fmt.Sprintf("skills = '%s'", skill)
-		}
-		filters = append(filters, "("+strings.Join(skillFilters, " OR ")+")")
-	}
-
-	// Seniority (OR between values)
-	if len(b.seniority) > 0 {
-		senFilters := make([]string, len(b.seniority))
-		for i, sen := range b.seniority {
-			senFilters[i] = fmt.Sprintf("seniority = %d", sen)
-		}
-		filters = append(filters, "("+strings.Join(senFilters, " OR ")+")")
-	}
-
-	// Location (OR between values)
-	if len(b.location) > 0 {
-		locFilters := make([]string, len(b.location))
-		for i, loc := range b.location {
-			locFilters[i] = fmt.Sprintf("location = %d", loc)
-		}
-		filters = append(filters, "("+strings.Join(locFilters, " OR ")+")")
-	}
-
-	// Remote Only
-	if b.remoteOnly != nil {
-		filters = append(filters, fmt.Sprintf("remote_only = %t", *b.remoteOnly))
-	}
-
-	// Open To Work
-	if b.openToWork != nil {
-		filters = append(filters, fmt.Sprintf("open_to_work = %t", *b.openToWork))
-	}
-
-	// Contract Type (OR between values)
-	if len(b.contractType) > 0 {
-		ctFilters := make([]string, len(b.contractType))
-		for i, ct := range b.contractType {
-			ctFilters[i] = fmt.Sprintf("contract_type = '%s'", ct)
-		}
-		filters = append(filters, "("+strings.Join(ctFilters, " OR ")+")")
-	}
-
-	// Years of Experience (range)
-	if b.minYearsExp != nil && b.maxYearsExp != nil {
-		filters = append(filters, fmt.Sprintf("years_of_experience %d TO %d", *b.minYearsExp, *b.maxYearsExp))
-	} else if b.minYearsExp != nil {
-		filters = append(filters, fmt.Sprintf("years_of_experience >= %d", *b.minYearsExp))
-	} else if b.maxYearsExp != nil {
-		filters = append(filters, fmt.Sprintf("years_of_experience <= %d", *b.maxYearsExp))
-	}
-
-	// Salary Range
-	if b.minSalary != nil && b.maxSalary != nil {
-		filters = append(filters, fmt.Sprintf("salary_expectation %f TO %f", *b.minSalary, *b.maxSalary))
-	} else if b.minSalary != nil {
-		filters = append(filters, fmt.Sprintf("salary_expectation >= %f", *b.minSalary))
-	} else if b.maxSalary != nil {
-		filters = append(filters, fmt.Sprintf("salary_expectation <= %f", *b.maxSalary))
-	}
-
-	return strings.Join(filters, " AND ")
+type SearchResponse struct {
+	ProfileId string
+	UserId    string
 }
 
 type SearchService interface {
 	ConfigureIndex() error
 	IndexProfile(profile ProfileSearchDTO) error
 	DeleteProfile(id string) error
-	SearchProfiles(query *ProfileSearchQueryBuilder) ([]string, error)
+	SearchProfiles(query *ProfileSearchQueryBuilder) (ProfileSearchResponse, error)
 }
 
 type meiliService struct {
@@ -196,31 +66,39 @@ func NewSearchService(cfg *config.Config) SearchService {
 }
 
 func (s *meiliService) ConfigureIndex() error {
+	// Cria o índice com primary key definida (se não existir, será criado)
+	_, err := s.client.CreateIndex(&meilisearch.IndexConfig{
+		Uid:        s.indexName,
+		PrimaryKey: "profileId",
+	})
+	if err != nil {
+		// Ignora erro se o índice já existir
+		log.Printf("Índice pode já existir: %v", err)
+	}
+
 	index := s.client.Index(s.indexName)
 
 	// Define Atributos Filtráveis (Facets / Filtros)
 	// Isso permite queries como: "skills = 'Go' AND remote_only = true"
 	filterableAttributes := []interface{}{
-		"id",
 		"skills",
 		"seniority",
-		"years_of_experience",
-		"salary_expectation",
+		"yearsOfExperience",
+		"salaryExpectation",
 		"location",
-		"remote_only",
-		"open_to_work",
-		"contract_type",
-		"project_tags",
+		"remoteOnly",
+		"openToWork",
+		"contractType",
 	}
-	_, err := index.UpdateFilterableAttributes(&filterableAttributes)
+	_, err = index.UpdateFilterableAttributes(&filterableAttributes)
 	if err != nil {
 		log.Printf("Erro ao configurar filtros do Meili: %v", err)
 		return err
 	}
 
 	sortableAttributes := []string{
-		"years_of_experience",
-		"salary_expectation",
+		"yearsOfExperience",
+		"salaryExpectation",
 	}
 	_, err = index.UpdateSortableAttributes(&sortableAttributes)
 	if err != nil {
@@ -237,11 +115,11 @@ func (s *meiliService) IndexProfile(profile ProfileSearchDTO) error {
 	task, err := s.client.Index(s.indexName).UpdateDocuments([]ProfileSearchDTO{profile}, nil)
 
 	if err != nil {
-		log.Printf("Erro ao enviar perfil %s para indexação: %v", profile.ID, err)
+		log.Printf("Erro ao enviar perfil %s para indexação: %v", profile.ProfileId, err)
 		return err
 	}
 
-	log.Printf("Perfil %s enviado para fila de indexação. Task ID: %d", profile.ID, task.TaskUID)
+	log.Printf("Perfil %s enviado para fila de indexação. Task ID: %d", profile.ProfileId, task.TaskUID)
 	return nil
 }
 
@@ -257,7 +135,7 @@ func (s *meiliService) DeleteProfile(id string) error {
 	return nil
 }
 
-func (s *meiliService) SearchProfiles(query *ProfileSearchQueryBuilder) ([]string, error) {
+func (s *meiliService) SearchProfiles(query *ProfileSearchQueryBuilder) (ProfileSearchResponse, error) {
 	searchQuery := ""
 	var filter string
 
@@ -267,7 +145,7 @@ func (s *meiliService) SearchProfiles(query *ProfileSearchQueryBuilder) ([]strin
 	}
 
 	searchRequest := &meilisearch.SearchRequest{
-		AttributesToRetrieve: []string{"id"},
+		AttributesToRetrieve: []string{"profileId", "username", "userProfileImage", "headline", "seniority", "skills", "location"},
 		Limit:                1000,
 	}
 
@@ -278,25 +156,21 @@ func (s *meiliService) SearchProfiles(query *ProfileSearchQueryBuilder) ([]strin
 	searchRes, err := s.client.Index(s.indexName).Search(searchQuery, searchRequest)
 	if err != nil {
 		log.Printf("Erro ao buscar perfis: %v", err)
-		return nil, err
+		return ProfileSearchResponse{}, err
 	}
 
-	// Extrair apenas os IDs dos resultados
-	type idResult struct {
-		ID string `json:"id"`
-	}
-
-	var results []idResult
+	var results []ProfileSearchResponseDTO
 	if err := searchRes.Hits.DecodeInto(&results); err != nil {
 		log.Printf("Erro ao decodificar resultados: %v", err)
-		return nil, err
+		return ProfileSearchResponse{}, err
 	}
 
-	ids := make([]string, len(results))
-	for i, r := range results {
-		ids[i] = r.ID
+	hitCount := searchRes.EstimatedTotalHits
+	response := ProfileSearchResponse{
+		TotalHits: hitCount,
+		Hits:      results,
 	}
 
-	log.Printf("Busca retornou %d perfis", len(ids))
-	return ids, nil
+	log.Printf("Busca retornou %d perfis", len(results))
+	return response, nil
 }

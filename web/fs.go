@@ -90,5 +90,5 @@ func ParseTemplateFragment(templates ...string) (*template.Template, error) {
 	for i, t := range templates {
 		paths[i] = "templates/" + t
 	}
-	return template.New("").Funcs(templateFuncs).ParseFS(EFS, paths...)
+	return template.New("fragment").Funcs(templateFuncs).ParseFS(EFS, paths...)
 }
