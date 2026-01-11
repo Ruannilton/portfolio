@@ -69,20 +69,43 @@ func (module *WebService) RenderLoginPage(w io.Writer) error {
 }
 
 func (module *WebService) RenderAppPage(ctx context.Context, w io.Writer) error {
-
 	user, err := module.authService.GetUserFromContext(ctx)
-
 	if err != nil {
 		return err
 	}
 
-	tmpl, err := web.ParseTemplate("pages/app.html", "portfolio.html")
+	// Prepara dados da view
+	viewData := PageViewData{
+		Authenticated: true,
+		PageTitle:     "Meu Portfolio",
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+	}
+
+	if user.ProfileImage != nil {
+		viewData.ProfileImage = *user.ProfileImage
+	}
+
+	// Tenta buscar o portfolio do usuário
+	profile, err := module.portfolioService.GetMyProfile(ctx, user.ID)
 	if err != nil {
-		log.Printf("Error parsing app template: %v", err)
+		if !errors.Is(err, portfolio.ErrProfileNotFound) {
+			log.Printf("RenderAppPage error fetching profile: %v", err)
+			return err
+		}
+		// Portfolio não existe ainda
+		viewData.ProfileExists = false
+	} else {
+		viewData.ProfileExists = true
+		viewData.FromProfile(profile)
+	}
+
+	tmpl, err := web.ParseTemplate("pages/my_profile.html", "top_bar.html", "portfolio_view.html", "portfolio_editor.html")
+	if err != nil {
+		log.Printf("Error parsing my_profile template: %v", err)
 		return err
 	}
-	tmpl.ExecuteTemplate(w, "base", user)
-	return nil
+	return tmpl.ExecuteTemplate(w, "base", viewData)
 }
 
 // RenderPublicProfilePage renderiza a página pública de visualização de um perfil (sem autenticação)
@@ -100,7 +123,7 @@ func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.Re
 	}
 
 	// Busca os dados do usuário dono do perfil
-	user, err := module.authService.GetUserByID(ctx, profile.UserID)
+	profileOwner, err := module.authService.GetUserByID(ctx, profile.UserID)
 	if err != nil {
 		log.Printf("RenderPublicProfilePage error fetching user: %v", err)
 		http.Error(w, "Falha ao carregar dados do usuário", http.StatusInternalServerError)
@@ -108,22 +131,24 @@ func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.Re
 	}
 
 	// Monta o DTO para a view
-	profileImage := ""
-	if user.ProfileImage != nil {
-		profileImage = *user.ProfileImage
+	viewData := PageViewData{
+		Authenticated:    false, // Página pública, sem autenticação
+		PageTitle:        profileOwner.FirstName + " " + profileOwner.LastName,
+		ProfileFirstName: profileOwner.FirstName,
+		ProfileLastName:  profileOwner.LastName,
+		ProfileExists:    true,
 	}
 
-	viewData := PublicProfileView{
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		ProfileImage: profileImage,
-		Profile:      profile,
+	if profileOwner.ProfileImage != nil {
+		viewData.ProfileUserImage = *profileOwner.ProfileImage
 	}
+
+	viewData.FromProfile(profile)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplate("pages/public_profile.html", "read_only_portfolio_content.html")
+	tmpl, err := web.ParseTemplate("pages/show_profile.html", "top_bar.html", "portfolio_view.html")
 	if err != nil {
-		log.Printf("Error parsing public_profile template: %v", err)
+		log.Printf("Error parsing show_profile template: %v", err)
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
@@ -216,13 +241,13 @@ func (module *WebService) UpdateAndRenderPortfolioHTML(ctx context.Context, w ht
 
 func (module *WebService) renderProfileContent(w http.ResponseWriter, profile *portfolio.Profile) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplateFragment("components/portfolio_content.html")
+	tmpl, err := web.ParseTemplateFragment("components/portfolio_view.html")
 	if err != nil {
-		log.Printf("Error parsing portfolio_content template: %v", err)
+		log.Printf("Error parsing portfolio_view template: %v", err)
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.ExecuteTemplate(w, "portfolio_content", profile)
+	tmpl.ExecuteTemplate(w, "portfolio_view", profile)
 }
 
 // RenderPortfolioPrint renderiza a versão para impressão/PDF do portfolio (endpoint público)
@@ -239,9 +264,9 @@ func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.Respo
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplateFragment("components/portfolio_print.html")
+	tmpl, err := web.ParseTemplateFragment("pages/print_portfolio.html")
 	if err != nil {
-		log.Printf("Error parsing portfolio_print template: %v", err)
+		log.Printf("Error parsing print_portfolio template: %v", err)
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}

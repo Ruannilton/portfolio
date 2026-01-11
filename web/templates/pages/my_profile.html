@@ -1,0 +1,287 @@
+{{ define "content" }}
+<div class="w-full">
+    {{ template "top_bar" . }}
+    <div class="grid grid-cols-12 gap-3">
+        <div class="col-span-2"></div>
+        <div class="col-span-8">
+            <div class="flex-1 p-8">
+                <div id="portfolio">
+
+                    <!-- Header do portfolio -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 class="text-2xl font-bold">Meu Portfolio</h1>
+
+                        <!-- Tool Bar -->
+                        <div class="flex gap-2">
+                            <a href="/portfolio/{{.ID}}/print" target="_blank"
+                                class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Imprimir">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                            </a>
+                            <button onclick="toggleEditMode()"
+                                class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Editar">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{ if .ProfileExists}}
+
+                    <!-- Conteudo do portfolio (modo exibição) -->
+                    <div id="portfolio-view">
+                        {{template "portfolio_view" .}}
+                    </div>
+
+                    <!-- Formulário do portfolio (modo edição) -->
+                    <div id="portfolio-edit" class="hidden">
+                        {{template "portfolio_editor" .}}
+                    </div>
+                    {{ else }}
+                    <div id="portfolio-empty">
+                            <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+                        <div class="mb-6">
+                            <svg class="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Você ainda não tem um portfólio</h2>
+                        <p class="text-gray-600 mb-6">Crie seu portfólio profissional e destaque suas habilidades,
+                            experiências e projetos.</p>
+
+                        <button onclick="showCreateForm()"
+                            class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg">
+                            🚀 Criar Meu Portfólio
+                        </button>
+                    </div>
+                    </div>
+
+                    <!-- Formulário do portfolio (modo criação) -->
+                    <div id="portfolio-edit" class="hidden">
+                        {{template "portfolio_editor" .}}
+                    </div>
+                    {{ end }}
+
+                </div>
+            </div>
+        </div>
+        <div class="col-span-2"></div>
+    </div>
+</div>
+
+<script>
+    function showCreateForm() {
+        document.getElementById('portfolio-edit').classList.remove('hidden');
+        document.getElementById('portfolio-empty').classList.add('hidden');
+    }
+
+    function toggleEditMode() {
+        const viewMode = document.getElementById('portfolio-view');
+        const editMode = document.getElementById('portfolio-edit');
+        viewMode.classList.toggle('hidden');
+        editMode.classList.toggle('hidden');
+    }
+
+    function removeItem(button, type) {
+        button.closest(`.${type}-item`).remove();
+    }
+
+    function addExperience() {
+        const container = document.getElementById('experiences-container');
+        const html = `
+        <div class="experience-item border border-gray-200 rounded-lg p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                    <input type="text" data-field="company" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                    <input type="text" data-field="role" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                    <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                    <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por vírgula)</label>
+                    <input type="text" data-field="techStack" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+            </div>
+            <button type="button" onclick="removeItem(this, 'experience')" class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+        </div>
+    `;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function addProject() {
+        const container = document.getElementById('projects-container');
+        const html = `
+        <div class="project-item border border-gray-200 rounded-lg p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                    <input type="text" data-field="name" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+                    <input type="text" data-field="tags" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
+                    <input type="url" data-field="repoUrl" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
+                    <input type="url" data-field="liveUrl" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+            </div>
+            <button type="button" onclick="removeItem(this, 'project')" class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+        </div>
+    `;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function addEducation() {
+        const container = document.getElementById('educations-container');
+        const html = `
+        <div class="education-item border border-gray-200 rounded-lg p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
+                    <input type="text" data-field="institution" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Grau</label>
+                    <input type="text" data-field="degree" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Bacharelado, Mestrado...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                    <input type="text" data-field="field" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                    <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                    <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+            </div>
+            <button type="button" onclick="removeItem(this, 'education')" class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+        </div>
+    `;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function prepareFormData(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+
+        const data = {
+            headline: form.querySelector('[name="headline"]').value,
+            bio: form.querySelector('[name="bio"]').value,
+            seniority: form.querySelector('[name="seniority"]').value,
+            years_of_experience: parseInt(form.querySelector('[name="years_of_experience"]').value) || 0,
+            open_to_work: form.querySelector('[name="open_to_work"]').checked,
+            salary_expectation: parseFloat(form.querySelector('[name="salary_expectation"]').value) || 0,
+            currency: form.querySelector('[name="currency"]').value,
+            contract_type: form.querySelector('[name="contract_type"]').value,
+            location: form.querySelector('[name="location"]').value,
+            remote_only: form.querySelector('[name="remote_only"]').checked,
+            skills: document.getElementById('skills-input').value.split(',').map(s => s.trim()).filter(s => s),
+            social_links: {
+                linkedin: form.querySelector('[name="social_links.linkedin"]').value,
+                github: form.querySelector('[name="social_links.github"]').value,
+                website: form.querySelector('[name="social_links.website"]').value
+            },
+            experiences: [],
+            projects: [],
+            educations: []
+        };
+
+        // Collect experiences
+        document.querySelectorAll('.experience-item').forEach(item => {
+            const exp = {
+                company: item.querySelector('[data-field="company"]').value,
+                role: item.querySelector('[data-field="role"]').value,
+                startDate: item.querySelector('[data-field="startDate"]').value ? new Date(item.querySelector('[data-field="startDate"]').value).toISOString() : null,
+                endDate: item.querySelector('[data-field="endDate"]').value ? new Date(item.querySelector('[data-field="endDate"]').value).toISOString() : null,
+                description: item.querySelector('[data-field="description"]').value,
+                techStack: item.querySelector('[data-field="techStack"]').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+            if (exp.company || exp.role) data.experiences.push(exp);
+        });
+
+        // Collect projects
+        document.querySelectorAll('.project-item').forEach(item => {
+            const proj = {
+                name: item.querySelector('[data-field="name"]').value,
+                description: item.querySelector('[data-field="description"]').value,
+                repoUrl: item.querySelector('[data-field="repoUrl"]').value,
+                liveUrl: item.querySelector('[data-field="liveUrl"]').value,
+                tags: item.querySelector('[data-field="tags"]').value.split(',').map(s => s.trim()).filter(s => s)
+            };
+            if (proj.name) data.projects.push(proj);
+        });
+
+        // Collect educations
+        document.querySelectorAll('.education-item').forEach(item => {
+            const edu = {
+                institution: item.querySelector('[data-field="institution"]').value,
+                degree: item.querySelector('[data-field="degree"]').value,
+                field: item.querySelector('[data-field="field"]').value,
+                startDate: item.querySelector('[data-field="startDate"]').value ? new Date(item.querySelector('[data-field="startDate"]').value).toISOString() : null,
+                endDate: item.querySelector('[data-field="endDate"]').value ? new Date(item.querySelector('[data-field="endDate"]').value).toISOString() : null
+            };
+            if (edu.institution) data.educations.push(edu);
+        });
+
+        // Send via fetch with JSON
+        fetch('/portfolio/html', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('portfolio-view').innerHTML = html;
+                // Re-execute scripts in the new HTML
+                const scripts = document.getElementById('portfolio-container').querySelectorAll('script');
+                scripts.forEach(script => {
+                    const newScript = document.createElement('script');
+                    newScript.textContent = script.textContent;
+                    document.body.appendChild(newScript);
+                    document.body.removeChild(newScript);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao atualizar portfólio');
+            });
+    }
+</script>
+{{end}}

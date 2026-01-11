@@ -1,0 +1,291 @@
+{{define "portfolio_editor"}}
+   
+    <form hx-put="/portfolio/update/html" 
+          hx-target="#portfolio-view"
+          hx-swap="innerHTML"
+          hx-ext="json-enc"
+          class="space-y-6">
+        
+        <!-- Informações Básicas -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">📝 Informações Básicas</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Título Profissional</label>
+                    <input type="text" name="headline" value="{{.Headline}}"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Ex: Desenvolvedor Full Stack">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea name="bio" rows="3"
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Conte um pouco sobre você...">{{.Bio}}</textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senioridade</label>
+                    <select name="seniority" 
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="JUNIOR" {{if eq (printf "%s" .Seniority) "JUNIOR"}}selected{{end}}>Júnior</option>
+                        <option value="MID_LEVEL" {{if eq (printf "%s" .Seniority) "MID_LEVEL"}}selected{{end}}>Pleno</option>
+                        <option value="SENIOR" {{if eq (printf "%s" .Seniority) "SENIOR"}}selected{{end}}>Sênior</option>
+                        <option value="LEAD" {{if eq (printf "%s" .Seniority) "LEAD"}}selected{{end}}>Tech Lead</option>
+                        <option value="PRINCIPAL" {{if eq (printf "%s" .Seniority) "PRINCIPAL"}}selected{{end}}>Principal</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Anos de Experiência</label>
+                    <input type="number" name="years_of_experience" value="{{.YearsOfExp}}" min="0"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="open_to_work" id="open_to_work" {{if .OpenToWork}}checked{{end}}
+                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="open_to_work" class="text-sm font-medium text-gray-700">Aberto a propostas</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferências de Trabalho -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">💰 Preferências de Trabalho</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Expectativa Salarial</label>
+                    <input type="number" name="salary_expectation" value="{{.SalaryExpectation}}" step="100"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Moeda</label>
+                    <select name="currency"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="BRL" {{if eq .Currency "BRL"}}selected{{end}}>BRL (R$)</option>
+                        <option value="USD" {{if eq .Currency "USD"}}selected{{end}}>USD ($)</option>
+                        <option value="EUR" {{if eq .Currency "EUR"}}selected{{end}}>EUR (€)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Contrato</label>
+                    <input type="text" name="contract_type" value="{{.ContractType}}"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="CLT, PJ, Freelance...">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Modalidade</label>
+                    <select name="location"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="REMOTE" {{if eq (printf "%s" .Location) "REMOTE"}}selected{{end}}>Remoto</option>
+                        <option value="ON_SITE" {{if eq (printf "%s" .Location) "ON_SITE"}}selected{{end}}>Presencial</option>
+                        <option value="HYBRID" {{if eq (printf "%s" .Location) "HYBRID"}}selected{{end}}>Híbrido</option>
+                        <option value="ANY" {{if eq (printf "%s" .Location) "ANY"}}selected{{end}}>Qualquer</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="remote_only" id="remote_only" {{if .RemoteOnly}}checked{{end}}
+                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="remote_only" class="text-sm font-medium text-gray-700">Apenas remoto</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Links -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🔗 Links Sociais</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                    <input type="url" name="social_links.linkedin" value="{{.SocialLinks.LinkedIn}}"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="https://linkedin.com/in/...">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">GitHub</label>
+                    <input type="url" name="social_links.github" value="{{.SocialLinks.GitHub}}"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="https://github.com/...">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                    <input type="url" name="social_links.website" value="{{.SocialLinks.Website}}"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="https://...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🛠️ Habilidades</h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Skills (separadas por vírgula)</label>
+                <input type="text" id="skills-input" value="{{join ", " .Skills}}"
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="JavaScript, TypeScript, Go, React...">
+            </div>
+        </div>
+
+        <!-- Experiências -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">💼 Experiências</h3>
+            <div id="experiences-container" class="space-y-4">
+                {{range $i, $exp := .Experiences}}
+                <div class="experience-item border border-gray-200 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                            <input type="text" data-field="company" value="{{$exp.Company}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                            <input type="text" data-field="role" value="{{$exp.Role}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                            <input type="date" data-field="startDate" value="{{formatDate $exp.StartDate}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                            <input type="date" data-field="endDate" value="{{formatDatePtr $exp.EndDate}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                            <textarea data-field="description" rows="2"
+                                      class="w-full p-2 border border-gray-300 rounded-lg">{{$exp.Description}}</textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por vírgula)</label>
+                            <input type="text" data-field="techStack" value="{{join ", " $exp.TechStack}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeItem(this, 'experience')" 
+                            class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+                </div>
+                {{end}}
+            </div>
+            <button type="button" onclick="addExperience()" 
+                    class="mt-4 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+                + Adicionar Experiência
+            </button>
+        </div>
+
+        <!-- Projetos -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🚀 Projetos</h3>
+            <div id="projects-container" class="space-y-4">
+                {{range $i, $proj := .Projects}}
+                <div class="project-item border border-gray-200 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                            <input type="text" data-field="name" value="{{$proj.Name}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+                            <input type="text" data-field="tags" value="{{join ", " $proj.Tags}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                            <textarea data-field="description" rows="2"
+                                      class="w-full p-2 border border-gray-300 rounded-lg">{{$proj.Description}}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
+                            <input type="url" data-field="repoUrl" value="{{$proj.RepoURL}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
+                            <input type="url" data-field="liveUrl" value="{{$proj.LiveURL}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeItem(this, 'project')" 
+                            class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+                </div>
+                {{end}}
+            </div>
+            <button type="button" onclick="addProject()" 
+                    class="mt-4 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+                + Adicionar Projeto
+            </button>
+        </div>
+
+        <!-- Educação -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🎓 Formação</h3>
+            <div id="educations-container" class="space-y-4">
+                {{range $i, $edu := .Educations}}
+                <div class="education-item border border-gray-200 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
+                            <input type="text" data-field="institution" value="{{$edu.Institution}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grau</label>
+                            <input type="text" data-field="degree" value="{{$edu.Degree}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg"
+                                   placeholder="Bacharelado, Mestrado...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                            <input type="text" data-field="field" value="{{$edu.Field}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                            <input type="date" data-field="startDate" value="{{formatDate $edu.StartDate}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                            <input type="date" data-field="endDate" value="{{formatDatePtr $edu.EndDate}}"
+                                   class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeItem(this, 'education')" 
+                            class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+                </div>
+                {{end}}
+            </div>
+            <button type="button" onclick="addEducation()" 
+                    class="mt-4 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+                + Adicionar Formação
+            </button>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="flex gap-4">
+            <button type="button" onclick="toggleEditMode()" 
+                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                Cancelar
+            </button>
+            <button type="submit" onclick="prepareFormData(event)"
+                    class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                💾 Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+{{end}}

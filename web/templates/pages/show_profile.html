@@ -1,72 +1,51 @@
 {{ define "content" }}
 <div class="w-full">
-    <div class="flex flex-row justify-between items-center h-16 w-full  bg-gray-800 text-white px-4">
-
-    </div>
-
+    {{ template "top_bar" . }}
     <div class="grid grid-cols-12 gap-3">
         <div class="col-span-2"></div>
+       
         <div class="col-span-8">
-            <!-- Conteúdo Principal -->
-            <main class="flex-1 p-8">
-                <!-- Portfolio -->
+            <div class="flex-1 p-8">
                 <div id="portfolio">
+                    
+                    <!-- Header do portfolio -->
                     <div class="flex justify-between items-center mb-4">
-                        
+                        <!-- Profile do dono do portfolio-->
                         <div class="flex flex-row items-center gap-3">
                             <div class="w-10 h-10 bg-blue-500 rounded-full">
-                                {{ if .ProfileImage }}
-                                    <img src="{{ .ProfileImage }}" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
+                                {{ if .ProfileUserImage }}
+                                    <img src="{{ .ProfileUserImage }}" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
                                 {{ else }}
                                     <span class="flex items-center justify-center h-full text-xl font-bold text-white">
-                                        {{ printf "%s%s" (slice .FirstName 0 1) (slice .LastName 0 1) }}
+                                        {{ printf "%s%s" (slice .ProfileFirstName 0 1) (slice .ProfileLastName 0 1) }}
                                     </span>
                                 {{ end }}
                             </div>
-                            <h2 class="text-lg font-bold">{{ .FirstName }} {{ .LastName }}</h2>
+                            <h2 class="text-lg font-bold">{{ .ProfileFirstName }} {{ .ProfileLastName }}</h2>
                         </div>
-
+                        <!-- Tool Bar -->
                         <div class="flex gap-2">
-                            <a href="/portfolio/{{.ID}}/print" target="_blank" 
-                               class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" 
-                               title="Imprimir">
+                            <a href="/portfolio/{{.ID}}/print" target="_blank"
+                                class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Imprimir">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                 </svg>
                             </a>
                         </div>
                     </div>
-                    {{ template "portfolio" . }}
-                </div>
 
-            </main>
+                    <!-- Conteudo do portfolio -->
+                     <div id="portfolio-view">     
+                        {{template "portfolio_view" .}}
+                    </div>
+
+                </div>
+            </div>
         </div>
+
         <div class="col-span-2"></div>
     </div>
-
-
 </div>
-</div>
-
-<script>
-    function logout() {
-        // Chama endpoint de logout e redireciona
-        fetch('/auth/logout', { method: 'GET' })
-            .finally(() => {
-                window.location.href = '/login';
-            });
-    }
-
-    function showSection(sectionId) {
-        const sections = ['portfolio', 'conversations', 'stats'];
-        sections.forEach(id => {
-            const section = document.getElementById(id);
-            if (id === sectionId) {
-                section.classList.remove('hidden');
-            } else {
-                section.classList.add('hidden');
-            }
-        });
-    }
-</script>
-{{ end }}
+{{end}}
