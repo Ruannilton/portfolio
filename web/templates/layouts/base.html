@@ -14,35 +14,8 @@
     <main class="container">
         {{ template "content" . }}
     </main>
+    <script src="/assets/js/app.js"></script>
 </body>
-<script>
-    function redirectToSearch() {
-        window.location.href = '/search';
-    }
-    function login() {
-        window.location.href = '/login';
-    }
-    function logout() {
-        // Chama endpoint de logout e redireciona
-        fetch('/auth/logout', { method: 'GET' })
-            .finally(() => {
-                window.location.href = '/login';
-            });
-    }
-
-
-    function showSection(sectionId) {
-        const sections = ['portfolio', 'conversations', 'stats'];
-        sections.forEach(id => {
-            const section = document.getElementById(id);
-            if (id === sectionId) {
-                section.classList.remove('hidden');
-            } else {
-                section.classList.add('hidden');
-            }
-        });
-    }
-</script>
 
 </html>
 {{ end }}
