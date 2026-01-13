@@ -85,11 +85,10 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWT
 
 	gothic.Store = store
 	redirectUrl := cfg.AppRedirectURL
-	appUrl := fmt.Sprintf("%s:%d",redirectUrl, appPort)
 
 	goth.UseProviders(
-		google.New(googleClientID, googleClientSecret, appUrl+"/auth/google/callback", "email", "profile"),
-		github.New(githubClientID, githubClientSecret, appUrl+"/auth/github/callback", "read:user", "user:email"),
+		google.New(googleClientID, googleClientSecret, redirectUrl+"/auth/google/callback", "email", "profile"),
+		github.New(githubClientID, githubClientSecret, redirectUrl+"/auth/github/callback", "read:user", "user:email"),
 	)
 
 	return &AuthService{
