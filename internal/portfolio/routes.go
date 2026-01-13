@@ -36,7 +36,7 @@ func (module *PortfolioModule) RegisterRoutes() *mux.Router {
 
 func (module *PortfolioModule) getMyProfile(w http.ResponseWriter, r *http.Request) {
 	user := jwt.GetUserCurrentUser(r.Context())
-	userId := user.UserID
+	userId := user.ID
 	profile, err := module.service.GetMyProfile(r.Context(), userId)
 
 	if err != nil {
@@ -53,7 +53,7 @@ func (module *PortfolioModule) getMyProfile(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(profile)
 }
 
-func (module *PortfolioModule) getProfile(w http.ResponseWriter, r *http.Request){
+func (module *PortfolioModule) getProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	profileID := vars["portfolioId"]
 
@@ -76,7 +76,7 @@ func (module *PortfolioModule) getProfile(w http.ResponseWriter, r *http.Request
 
 func (module *PortfolioModule) createProfile(w http.ResponseWriter, r *http.Request) {
 	user := jwt.GetUserCurrentUser(r.Context())
-	userID := user.UserID
+	userID := user.ID
 
 	var input SaveProfileInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -103,7 +103,7 @@ func (module *PortfolioModule) createProfile(w http.ResponseWriter, r *http.Requ
 
 func (module *PortfolioModule) updateProfile(w http.ResponseWriter, r *http.Request) {
 	user := jwt.GetUserCurrentUser(r.Context())
-	userID := user.UserID
+	userID := user.ID
 
 	var input SaveProfileInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -129,7 +129,7 @@ func (module *PortfolioModule) updateProfile(w http.ResponseWriter, r *http.Requ
 
 func (module *PortfolioModule) patchProfile(w http.ResponseWriter, r *http.Request) {
 	user := jwt.GetUserCurrentUser(r.Context())
-	userID := user.UserID
+	userID := user.ID
 
 	var input PatchProfileDTO
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -155,7 +155,7 @@ func (module *PortfolioModule) patchProfile(w http.ResponseWriter, r *http.Reque
 
 func (module *PortfolioModule) deleteProfile(w http.ResponseWriter, r *http.Request) {
 	user := jwt.GetUserCurrentUser(r.Context())
-	userID := user.UserID
+	userID := user.ID
 
 	if err := module.service.DeleteProfile(r.Context(), userID); err != nil {
 		if err == ErrProfileNotFound {

@@ -11,14 +11,14 @@ import (
 )
 
 type AuthModule struct {
-	authService  *AuthService
-	jwtService *jwt.JWTService
+	authService *AuthService
+	jwtService  *jwt.JWTService
 }
 
-func NewAuthModule(authService *AuthService, jwtService *jwt.JWTService ) *AuthModule {
+func NewAuthModule(authService *AuthService, jwtService *jwt.JWTService) *AuthModule {
 	return &AuthModule{
-		authService:  authService,
-		jwtService:     jwtService,
+		authService: authService,
+		jwtService:  jwtService,
 	}
 }
 
@@ -82,24 +82,25 @@ func (module *AuthModule) oAuthCallbackHandler(w http.ResponseWriter, r *http.Re
 	})
 
 	// Redireciona para a página do app
-	http.Redirect(w, r, "/app", http.StatusFound)
+	http.Redirect(w, r, "/app/profile", http.StatusFound)
 }
 
 func (module *AuthModule) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
-        Name:     "access_token",
-        Value:    "",
-        Path:     "/",
-        MaxAge:   -1,
-        HttpOnly: true,
-        SameSite: http.SameSiteLaxMode,
-    })
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	if err := module.authService.Logout(w, r); err != nil {
-		log.Printf("Logout error: %v", err)
-		http.Error(w, "Failed to logout", http.StatusInternalServerError)
-		return
+		// Loga o erro mas não falha a requisição, pois o logout prioritário é o JWT
+		log.Printf("Gothic logout warning: %v", err)
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (module *AuthModule) registerLocalUser(w http.ResponseWriter, r *http.Request) {
@@ -163,6 +164,17 @@ func (module *AuthModule) loginLocalUser(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Failed to login user", http.StatusUnauthorized)
 		return
 	}
+
+	// Seta cookie com access_token (Correção: definir cookie no servidor)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    tokenResponse.AccessToken,
+		Path:     "/",
+		MaxAge:   int(tokenResponse.ExpiresIn),
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(tokenResponse); err != nil {
 		log.Printf("Failed to encode response: %v", err)

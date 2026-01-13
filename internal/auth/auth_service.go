@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
@@ -52,10 +51,9 @@ type GetUserResponse struct {
 }
 
 func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWTService) *AuthService {
-	envErr := godotenv.Load()
-	if envErr != nil {
-		panic("Failed to load .env file")
-	}
+	// Config already carregada em `config.LoadConfig()` e variáveis de ambiente
+	// são fornecidas pelo Docker via `env_file`; não devemos panicar se não
+	// existir um arquivo .env no filesystem.
 
 	googleClientID := cfg.GoogleClientID
 	googleClientSecret := cfg.GoogleClientSecret
@@ -133,9 +131,16 @@ func (uc *AuthService) LoginLocal(ctx context.Context, input LoginInput) (*jwt.T
 		return nil, errors.New("invalid credentials")
 	}
 
+	profImageUrl := ""
+	if user.ProfileImage != nil {
+		profImageUrl = *user.ProfileImage
+	}
+
 	inputToken := &jwt.GenerateTokenInput{
-		UserID:    user.ID,
-		UserEmail: user.Email,
+		UserID:          user.ID,
+		UserEmail:       user.Email,
+		UerName:         user.FirstName + " " + user.LastName,
+		ProfileImageURL: profImageUrl,
 	}
 	token, err := uc.jwtService.GenerateToken(inputToken)
 	if err != nil {
@@ -218,9 +223,16 @@ func (s *AuthService) CompleteOAuthLogin(ctx context.Context, gothUser goth.User
 		}
 	}
 
+	userProfile := ""
+	if user.ProfileImage != nil {
+		userProfile = *user.ProfileImage
+	}
+
 	inputToken := &jwt.GenerateTokenInput{
-		UserID:    user.ID,
-		UserEmail: user.Email,
+		UserID:          user.ID,
+		UserEmail:       user.Email,
+		UerName:         user.FirstName + " " + user.LastName,
+		ProfileImageURL: userProfile,
 	}
 	token, tokenErr := s.jwtService.GenerateToken(inputToken)
 	if tokenErr != nil {
@@ -242,7 +254,7 @@ func (s *AuthService) GetUserFromContext(ctx context.Context) (*User, error) {
 
 	loggedUser := jwt.GetUserCurrentUser(ctx)
 
-	user, err := s.repo.FindByEmail(ctx, loggedUser.UserEmail)
+	user, err := s.repo.FindByEmail(ctx, loggedUser.Email)
 
 	if err != nil {
 		return nil, err

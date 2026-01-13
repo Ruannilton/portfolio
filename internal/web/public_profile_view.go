@@ -5,21 +5,23 @@ import "portfolio/internal/portfolio"
 // PageViewData é a struct unificada para renderizar páginas com templates
 // Combina dados de autenticação, usuário logado, perfil visualizado e portfolio
 type PageViewData struct {
-	// Campos de autenticação/sessão (top_bar)
+	// === AUTENTICAÇÃO/SESSÃO ===
 	Authenticated bool   // Se usuário está autenticado
 	PageTitle     string // Título da página
 
-	// Dados do usuário logado (top_bar quando autenticado)
-	FirstName    string // Primeiro nome do usuário logado
-	LastName     string // Sobrenome do usuário logado
-	ProfileImage string // URL da imagem do usuário logado
+	// === DADOS DO USUÁRIO LOGADO (para top_bar) ===
+	// Prefixo "LoggedUser" indica claramente que é o usuário da sessão
+	LoggedUserFirstName    string // Primeiro nome do usuário logado
+	LoggedUserLastName     string // Sobrenome do usuário logado
+	LoggedUserProfileImage string // URL da imagem do usuário logado
 
-	// Dados do perfil sendo visualizado (show_profile.html)
-	ProfileFirstName string // Primeiro nome do dono do perfil
-	ProfileLastName  string // Sobrenome do dono do perfil
-	ProfileUserImage string // URL da imagem do dono do perfil
+	// === DADOS DO DONO DO PORTFOLIO (para show_profile) ===
+	// Prefixo "Owner" indica que é o dono do portfolio sendo visualizado
+	OwnerFirstName    string // Primeiro nome do dono do perfil
+	OwnerLastName     string // Sobrenome do dono do perfil
+	OwnerProfileImage string // URL da imagem do dono do perfil
 
-	// Estado do portfolio (my_profile.html)
+	// === ESTADO DO PORTFOLIO ===
 	ProfileExists bool // Se o portfolio existe
 
 	// Dados do portfolio (embeded para acesso direto nos templates)

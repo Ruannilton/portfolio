@@ -8,63 +8,61 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-
 const AutenticatedUserKey string = "autenticatedUser"
+
 type AutenticatedUser struct {
-	UserID    string
-	UserEmail string
+	ID              string
+	Email           string
+	FirstName       string
+	LastName        string
+	ProfileImageURL *string
 }
 
 func (service *JWTService) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		
-		token := getJwtTokenFromRequest(r)
-		if token == "" {
-			http.Error(w, "Authorization token required", http.StatusUnauthorized)
-			return
-		}
-	
-		userID, err := GetUserIDFromToken(token,service)
-		if err != nil {
-			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
-			return
-		}
 
-		userEmail, err := GetUserEmailFromToken(token,service)
-		if err != nil {
-			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
-			return
-		}
-
-		autenticatedUser :=  AutenticatedUser{
-			UserID:    *userID,
-			UserEmail: *userEmail,
-		}
+		autenticatedUser := GetAutenticatedUserFromRequest(r, service)
 
 		ctx := context.WithValue(r.Context(), AutenticatedUserKey, autenticatedUser)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
-func GetUserCurrentUser(ctx context.Context) (*AutenticatedUser) {
+func GetUserCurrentUser(ctx context.Context) *AutenticatedUser {
 	user, _ := ctx.Value(AutenticatedUserKey).(AutenticatedUser)
 	return &user
 }
 
 func GetUserIDFromToken(tokenString string, service *JWTService) (*string, error) {
-	token, err := parseToken(tokenString,service.secretKey)
+	token, err := parseToken(tokenString, service.secretKey)
 	if err != nil {
 		return nil, err
 	}
 	return getClaimAsString(*token, "sub")
 }
 
-func  GetUserEmailFromToken(tokenString string,service *JWTService) (*string, error) {
-	token, err := parseToken(tokenString,service.secretKey)
+func GetUserEmailFromToken(tokenString string, service *JWTService) (*string, error) {
+	token, err := parseToken(tokenString, service.secretKey)
 	if err != nil {
 		return nil, err
 	}
 	return getClaimAsString(*token, "email")
+}
+
+func GetUserNameFromToken(tokenString string, service *JWTService) (*string, error) {
+	token, err := parseToken(tokenString, service.secretKey)
+	if err != nil {
+		return nil, err
+	}
+	return getClaimAsString(*token, "name")
+}
+
+func GetUserProfileFromToken(tokenString string, service *JWTService) (*string, error) {
+	token, err := parseToken(tokenString, service.secretKey)
+	if err != nil {
+		return nil, err
+	}
+	return getClaimAsString(*token, "profileImageURL")
 }
 
 func getClaimAsString(token jwt.Token, key string) (*string, error) {
@@ -91,23 +89,69 @@ func parseToken(tokenString string, secretKey []byte) (*jwt.Token, error) {
 	return token, err
 }
 
-func getJwtTokenFromRequest(r *http.Request) string {
-		
-		cookie, err := r.Cookie("access_token")
-		if err == nil {
-			return cookie.Value
-		}
+func GetJwtTokenFromRequest(r *http.Request) string {
 
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			return ""
-		}
+	cookie, err := r.Cookie("access_token")
+	if err == nil {
+		return cookie.Value
+	}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return ""
-		}
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return ""
+	}
 
-		tokenString := parts[1]
-		return tokenString
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return ""
+	}
+
+	tokenString := parts[1]
+	return tokenString
+}
+
+func GetAutenticatedUserFromRequest(r *http.Request, jwtService *JWTService) *AutenticatedUser {
+	token := GetJwtTokenFromRequest(r)
+
+	if token == "" {
+		return nil
+	}
+
+	userID, err := GetUserIDFromToken(token, jwtService)
+	if err != nil || userID == nil || *userID == "" {
+		return nil
+	}
+
+	userEmail, emailErr := GetUserEmailFromToken(token, jwtService)
+	if emailErr != nil || userEmail == nil || *userEmail == "" {
+		return nil
+	}
+	name, nameErr := GetUserNameFromToken(token, jwtService)
+	if nameErr != nil || name == nil || *name == "" {
+		return nil
+	}
+	profileImageURL, profileErr := GetUserProfileFromToken(token, jwtService)
+	if profileErr != nil {
+		return nil
+	}
+	if *profileImageURL == "" {
+		profileImageURL = nil
+	}
+
+	// Split name into FirstName and LastName
+	firstName := *name
+	lastName := ""
+	if parts := strings.SplitN(*name, " ", 2); len(parts) == 2 {
+		firstName = parts[0]
+		lastName = parts[1]
+	}
+
+	autenticatedUser := AutenticatedUser{
+		ID:              *userID,
+		Email:           *userEmail,
+		FirstName:       firstName,
+		LastName:        lastName,
+		ProfileImageURL: profileImageURL,
+	}
+	return &autenticatedUser
 }

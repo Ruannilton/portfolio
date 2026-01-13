@@ -38,20 +38,19 @@ function handleAuthResponse(event) {
         try {
             const data = JSON.parse(xhr.responseText);
             if (data.access_token) {
-                // Salva token em cookie (será setado pelo servidor também)
-                document.cookie = `access_token=${data.access_token}; path=/; max-age=${data.expires_in}; SameSite=Lax`;
+                // Token agora é gerenciado pelo servidor via HttpOnly cookie
                 
                 // Mostra sucesso e redireciona
                 response.innerHTML = '<div class="bg-green-100 text-green-700 p-3 rounded-lg">Login realizado com sucesso! Redirecionando...</div>';
                 
                 setTimeout(() => {
-                    window.location.href = '/app';
+                    window.location.href = '/app/profile';
                 }, 500);
             } else {
                 // Registro sem auto-login (fallback)
                 response.innerHTML = '<div class="bg-green-100 text-green-700 p-3 rounded-lg">Conta criada! Redirecionando...</div>';
                 setTimeout(() => {
-                    window.location.href = '/app';
+                    window.location.href = '/app/profile';
                 }, 500);
             }
         } catch (e) {
@@ -59,7 +58,7 @@ function handleAuthResponse(event) {
             if (xhr.status === 201) {
                 response.innerHTML = '<div class="bg-green-100 text-green-700 p-3 rounded-lg">Conta criada! Redirecionando...</div>';
                 setTimeout(() => {
-                    window.location.href = '/app';
+                    window.location.href = '/app/profile';
                 }, 500);
             }
         }

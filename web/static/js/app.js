@@ -4,17 +4,17 @@
 
 // Navegação
 function redirectToSearch() {
-    window.location.href = '/search';
+    window.location.href = '/app/search';
 }
 
 function login() {
-    window.location.href = '/login';
+    window.location.href = '/app/login';
 }
 
 function logout() {
     fetch('/auth/logout', { method: 'GET' })
         .finally(() => {
-            window.location.href = '/login';
+            window.location.href = '/app/login';
         });
 }
 

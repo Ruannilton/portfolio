@@ -22,6 +22,20 @@ services:
     volumes:
       - meili_data:/meili_data
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portfolio:latest
+    restart: unless-stopped
+    depends_on:
+      - psql_bp
+      - meilisearch
+    env_file:
+      - .docker.env
+    ports:
+      - "${PORT}:8080"
+
 volumes:
   psql_volume_bp:
   meili_data:

@@ -17,6 +17,8 @@ type TokenResponse struct {
 type GenerateTokenInput struct {
 	UserID    string
 	UserEmail string
+	UerName  string
+	ProfileImageURL string
 }
 
 type JWTService struct {
@@ -49,6 +51,8 @@ func (service *JWTService) GenerateToken(input *GenerateTokenInput) (*TokenRespo
 		"type":  "access",
 		"iss":   service.issuer,
 		"exp":   accessExp.Unix(),
+		"name":  input.UerName,
+		"profileImageURL": input.ProfileImageURL,
 	}
 	accessTokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(service.secretKey)
 	if err != nil {
@@ -60,6 +64,8 @@ func (service *JWTService) GenerateToken(input *GenerateTokenInput) (*TokenRespo
 		"type": "refresh",
 		"iss":  service.issuer,
 		"exp":  refreshExp.Unix(),
+		"name":  input.UerName,
+		"profileImageURL": input.ProfileImageURL,
 	}
 	refreshTokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(service.secretKey)
 	if err != nil {

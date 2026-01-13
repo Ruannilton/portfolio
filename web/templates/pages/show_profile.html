@@ -13,19 +13,19 @@
                         <!-- Profile do dono do portfolio-->
                         <div class="flex flex-row items-center gap-3">
                             <div class="w-10 h-10 bg-blue-500 rounded-full">
-                                {{ if .ProfileUserImage }}
-                                    <img src="{{ .ProfileUserImage }}" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
+                                {{ if .OwnerProfileImage }}
+                                    <img src="{{ .OwnerProfileImage }}" alt="Profile Image" class="w-10 h-10 rounded-full object-cover">
                                 {{ else }}
                                     <span class="flex items-center justify-center h-full text-xl font-bold text-white">
-                                        {{ printf "%s%s" (slice .ProfileFirstName 0 1) (slice .ProfileLastName 0 1) }}
+                                        {{ printf "%s%s" (slice .OwnerFirstName 0 1) (slice .OwnerLastName 0 1) }}
                                     </span>
                                 {{ end }}
                             </div>
-                            <h2 class="text-lg font-bold">{{ .ProfileFirstName }} {{ .ProfileLastName }}</h2>
+                            <h2 class="text-lg font-bold">{{ .OwnerFirstName }} {{ .OwnerLastName }}</h2>
                         </div>
                         <!-- Tool Bar -->
                         <div class="flex gap-2">
-                            <a href="/portfolio/{{.ID}}/print" target="_blank"
+                            <a href="/app/profile/{{.ID}}/print" target="_blank"
                                 class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                                 title="Imprimir">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
