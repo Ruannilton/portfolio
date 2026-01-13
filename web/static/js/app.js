@@ -13,9 +13,12 @@ function login() {
 
 function logout() {
     fetch('/auth/logout', { method: 'GET' })
-        .finally(() => {
-            window.location.href = '/app/login';
-        });
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            }
+        })
+        .catch(error => console.error('Logout failed:', error));
 }
 
 // Controle de seções

@@ -25,9 +25,9 @@ func NewAuthModule(authService *AuthService, jwtService *jwt.JWTService) *AuthMo
 func (module *AuthModule) RegisterAuthRoutes() *mux.Router {
 	router := mux.NewRouter()
 
+	router.HandleFunc("/logout", module.logoutHandler).Methods("GET")
 	router.HandleFunc("/{provider}", module.beginOAuthHandler).Methods("GET")
 	router.HandleFunc("/{provider}/callback", module.oAuthCallbackHandler).Methods("GET")
-	router.HandleFunc("/logout", module.logoutHandler).Methods("GET")
 	router.HandleFunc("/register", module.registerLocalUser).Methods("POST")
 	router.HandleFunc("/login", module.loginLocalUser).Methods("POST")
 	router.HandleFunc("/forgot-password", module.forgotPassword).Methods("POST")
@@ -100,7 +100,8 @@ func (module *AuthModule) logoutHandler(w http.ResponseWriter, r *http.Request) 
 		log.Printf("Gothic logout warning: %v", err)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// Redireciona para a página de login após deletar o cookie
+	http.Redirect(w, r, "/app/login", http.StatusFound)
 }
 
 func (module *AuthModule) registerLocalUser(w http.ResponseWriter, r *http.Request) {
