@@ -2,30 +2,22 @@ package web
 
 import "portfolio/internal/portfolio"
 
-// PageViewData é a struct unificada para renderizar páginas com templates
-// Combina dados de autenticação, usuário logado, perfil visualizado e portfolio
 type PageViewData struct {
-	// === AUTENTICAÇÃO/SESSÃO ===
-	Authenticated bool   // Se usuário está autenticado
-	PageTitle     string // Título da página
+	Authenticated bool
+	PageTitle     string
 
-	// === DADOS DO USUÁRIO LOGADO (para top_bar) ===
-	// Prefixo "LoggedUser" indica claramente que é o usuário da sessão
-	LoggedUserFirstName    string // Primeiro nome do usuário logado
-	LoggedUserLastName     string // Sobrenome do usuário logado
-	LoggedUserProfileImage string // URL da imagem do usuário logado
+	LoggedUserFirstName    string
+	LoggedUserLastName     string
+	LoggedUserProfileImage string
 
-	// === DADOS DO DONO DO PORTFOLIO (para show_profile) ===
-	// Prefixo "Owner" indica que é o dono do portfolio sendo visualizado
-	OwnerFirstName    string // Primeiro nome do dono do perfil
-	OwnerLastName     string // Sobrenome do dono do perfil
-	OwnerProfileImage string // URL da imagem do dono do perfil
+	OwnerFirstName    string
+	OwnerLastName     string
+	OwnerProfileImage string
+	OwnerId           string
 
-	// === ESTADO DO PORTFOLIO ===
-	ProfileExists bool // Se o portfolio existe
+	ProfileExists bool
 
-	// Dados do portfolio (embeded para acesso direto nos templates)
-	ID                string
+	ProfileID         string
 	Headline          string
 	Bio               string
 	Seniority         portfolio.Seniority
@@ -48,7 +40,8 @@ func (p *PageViewData) FromProfile(profile *portfolio.Profile) {
 	if profile == nil {
 		return
 	}
-	p.ID = profile.ID
+	p.ProfileID = profile.ID
+	p.OwnerId = profile.UserID
 	p.Headline = profile.Headline
 	p.Bio = profile.Bio
 	p.Seniority = profile.Seniority

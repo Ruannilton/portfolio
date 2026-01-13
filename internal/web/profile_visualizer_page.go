@@ -23,7 +23,7 @@ func (m *WebModule) portfolioPrintHandler(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	profileID := vars["profile_id"]
 	ctx := r.Context()
-	RenderPortfolioPrint(ctx, w, profileID, m.webService.portfolioService)
+	m.webService.RenderPortfolioPrint(ctx, w, profileID)
 }
 
 func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.ResponseWriter, profileID string) {
@@ -81,8 +81,8 @@ func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.Re
 	tmpl.ExecuteTemplate(w, "base", viewData)
 }
 
-func RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, userID string, portfolioService *portfolio.PortfolioService) {
-	profile, err := portfolioService.GetMyProfile(ctx, userID)
+func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, profileID string) {
+	profile, err := module.portfolioService.GetProfile(ctx, profileID)
 	if err != nil {
 		if errors.Is(err, portfolio.ErrProfileNotFound) {
 			http.Error(w, "Portfolio não encontrado", http.StatusNotFound)
@@ -93,6 +93,26 @@ func RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, userID str
 		return
 	}
 
+	profileOwner, err := module.authService.GetUserByID(ctx, profile.UserID)
+	if err != nil {
+		log.Printf("RenderPortfolioPrint error fetching user: %v", err)
+		http.Error(w, "Falha ao carregar dados do usuário", http.StatusInternalServerError)
+		return
+	}
+
+	viewData := PageViewData{
+		PageTitle:      profileOwner.FirstName + " " + profileOwner.LastName,
+		OwnerFirstName: profileOwner.FirstName,
+		OwnerLastName:  profileOwner.LastName,
+		ProfileExists:  true,
+	}
+
+	if profileOwner.ProfileImage != nil {
+		viewData.OwnerProfileImage = *profileOwner.ProfileImage
+	}
+
+	viewData.FromProfile(profile)
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	tmpl, err := web.ParseTemplateFragment("pages/print_portfolio.html")
 	if err != nil {
@@ -100,5 +120,5 @@ func RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, userID str
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.ExecuteTemplate(w, "portfolio_print", profile)
+	tmpl.ExecuteTemplate(w, "portfolio_print", viewData)
 }
