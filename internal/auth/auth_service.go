@@ -84,7 +84,8 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWT
 	store.Options.SameSite = http.SameSiteLaxMode
 
 	gothic.Store = store
-	appUrl := fmt.Sprintf("http://localhost:%d", appPort)
+	redirectUrl := cfg.AppRedirectURL
+	appUrl := fmt.Sprintf("%s:%d",redirectUrl, appPort)
 
 	goth.UseProviders(
 		google.New(googleClientID, googleClientSecret, appUrl+"/auth/google/callback", "email", "profile"),

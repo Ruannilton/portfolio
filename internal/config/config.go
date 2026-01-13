@@ -41,6 +41,7 @@ type Config struct {
 	// Meilisearch (NOVO)
 	MeiliHost      string
 	MeiliMasterKey string
+	AppRedirectURL string
 }
 
 func LoadConfig() (*Config, error) {
@@ -68,6 +69,7 @@ func LoadConfig() (*Config, error) {
 		// Configurações do Meilisearch
 		MeiliHost:      getEnv("MEILI_HOST", "http://localhost:7700"),
 		MeiliMasterKey: getEnv("MEILI_MASTER_KEY", ""),
+		AppRedirectURL: getEnv("APP_REDIRECT_URL", "http://localhost:8080"),
 	}
 
 	if err := cfg.validate(); err != nil {
