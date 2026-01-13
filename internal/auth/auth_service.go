@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"portfolio/internal/config"
 	"portfolio/internal/jwt"
@@ -64,7 +63,7 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWT
 	key := cfg.SessionKey
 	maxAge := cfg.SessionMaxAge
 	isProduction := cfg.IsProduction
-	appPort := cfg.Port
+
 
 	// Garante que a chave tenha 32 bytes para AES-256
 	keyBytes := []byte(key)
