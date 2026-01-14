@@ -34,7 +34,7 @@ services:
     environment:
       PORT: "${PORT:-8080}"
       APP_ENV: "docker"
-      APP_REDIRECT_URL: "${APP_REDIRECT_URL:-http://localhost:8080}"
+      APP_REDIRECT_URL: "${APP_REDIRECT_URL}"
       BLUEPRINT_DB_HOST: "psql_bp"
       BLUEPRINT_DB_PORT: "${BLUEPRINT_DB_PORT:-5432}"
       BLUEPRINT_DB_DATABASE: "${BLUEPRINT_DB_DATABASE}"
