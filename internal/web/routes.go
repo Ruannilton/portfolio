@@ -31,6 +31,8 @@ func NewWebModule(authService *auth.AuthService, jwtService *jwt.JWTService, por
 func (m *WebModule) SetupFrontEnd(router *mux.Router) {
 	fileServer := http.FileServer(web.GetStaticAssets())
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", fileServer)).Methods("GET")
+	// Página Raiz
+	router.HandleFunc("/", m.rootPageEndpoint).Methods("GET")
 
 	// Página de Login/Cadastro
 	router.HandleFunc("/app/login", m.loginPageEndpoint).Methods("GET")
@@ -48,4 +50,8 @@ func (m *WebModule) SetupFrontEnd(router *mux.Router) {
 	router.HandleFunc("/app/profile/{profile_id}", m.optionalAuth(m.publicProfileHandler)).Methods("GET")
 	router.HandleFunc("/app/profile/{profile_id}/print", m.portfolioPrintHandler).Methods("GET")
 
+}
+
+func (m *WebModule) rootPageEndpoint(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/app/login", http.StatusSeeOther)
 }
