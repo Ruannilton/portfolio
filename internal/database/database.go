@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/url"
 	"portfolio/internal/config"
 	"strconv"
 	"time"
@@ -40,7 +41,24 @@ func New(cfg *config.Config) DbService {
 	if dbInstance != nil {
 		return dbInstance
 	}
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase, cfg.DBSchema)
+	
+	u := url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(cfg.DBUsername, cfg.DBPassword),
+		Host:   fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
+		Path:   cfg.DBDatabase,
+	}
+
+	q := u.Query()
+	q.Set("sslmode", "disable")
+	if cfg.DBSchema != "" {
+		q.Set("search_path", cfg.DBSchema)
+	}
+	u.RawQuery = q.Encode()
+
+	connStr := u.String()
+
+	log.Printf("Connecting to database at %s", connStr)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		log.Fatal(err)

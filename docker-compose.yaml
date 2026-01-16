@@ -10,6 +10,12 @@ services:
       - "${BLUEPRINT_DB_PORT}:5432"
     volumes:
       - psql_volume_bp:/var/lib/postgresql
+    # Adicionado: Verifica se o Postgres está pronto para conexões
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BLUEPRINT_DB_USERNAME} -d ${BLUEPRINT_DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   meilisearch:
     image: getmeili/meilisearch:v1.10 
@@ -21,6 +27,12 @@ services:
       - "${MEILI_PORT}:7700"
     volumes:
       - meili_data:/meili_data
+    # Adicionado: Verifica se a rota /health retorna status 200
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build:
@@ -29,8 +41,10 @@ services:
     image: portfolio:latest
     restart: unless-stopped
     depends_on:
-      - psql_bp
-      - meilisearch
+      psql_bp:
+        condition: service_healthy # Espera o check do Postgres passar
+      meilisearch:
+        condition: service_healthy # Espera o check do Meilisearch passar
     environment:
       PORT: "${PORT:-8080}"
       APP_ENV: "docker"
