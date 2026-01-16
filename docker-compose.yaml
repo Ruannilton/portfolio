@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal-network
 
   meilisearch:
     image: getmeili/meilisearch:v1.10 
@@ -33,6 +35,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal-network
 
   app:
     build:
@@ -68,7 +72,13 @@ services:
       MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
     ports:
       - "${PORT}:8080"
+    networks:
+      - internal-network
 
 volumes:
   psql_volume_bp:
   meili_data:
+
+networks:
+  internal-network:     # Criação da rede privada
+    driver: bridge
