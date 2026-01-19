@@ -10,8 +10,12 @@ function showCreateForm() {
 function toggleEditMode() {
     const viewMode = document.getElementById('portfolio-view');
     const editMode = document.getElementById('portfolio-edit');
+    const emptyMode = document.getElementById('portfolio-empty');
     if (viewMode) viewMode.classList.toggle('hidden');
     if (editMode) editMode.classList.toggle('hidden');
+    if (!viewMode && emptyMode && editMode.classList.contains('hidden')) {
+        emptyMode.classList.remove('hidden');
+    }
 }
 
 function removeItem(button, type) {
@@ -65,8 +69,8 @@ function escapeHtml(str) {
 }
 
 function updateBio(content) {
-     const textArea = document.getElementById('bio-textarea');
-     textArea.value = escapeHtml(content);
+    const textArea = document.getElementById('bio-textarea');
+    textArea.value = escapeHtml(content);
 }
 
 function updateSocialLinks(links) {
@@ -84,9 +88,9 @@ function addProject(data = null) {
     const repoUrl = data ? data.repoUrl : '';
     const liveUrl = data ? data.liveUrl : '';
     const tags = data ? (data.tags || []).join(', ') : '';
-    
+
     // NOVOS VALORES
-    const provider = data ? (data.provider || '') : ''; 
+    const provider = data ? (data.provider || '') : '';
     const providerId = data ? (data.providerId || '') : '';
 
     const html = `
@@ -255,18 +259,18 @@ function prepareFormData(event) {
 async function importGithubProjects() {
     const btn = document.getElementById('btn-import-github');
     const originalText = btn.innerHTML;
-    
+
     btn.disabled = true;
     btn.innerHTML = `Importando...`;
 
     try {
         // 1. Mapear projetos existentes usando uma chave única "PROVIDER:ID"
         const existingKeys = new Set();
-        
+
         document.querySelectorAll('.project-item').forEach(item => {
             const p = item.querySelector('input[data-field="provider"]').value;
             const pid = item.querySelector('input[data-field="providerId"]').value;
-            
+
             // Só adiciona ao Set se tiver ID (projetos manuais não têm ID externo)
             if (p && pid) {
                 existingKeys.add(`${p}:${pid}`);
@@ -277,7 +281,7 @@ async function importGithubProjects() {
         const response = await fetch('/sync/github'); // ou /api/github dependendo da sua rota
         if (!response.ok) throw new Error('Falha na API');
         const data = await response.json();
-        
+
         let addedCount = 0;
 
         if (data.repositories && Array.isArray(data.repositories)) {
