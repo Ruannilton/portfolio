@@ -4,6 +4,40 @@
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
+// htmx.defineExtension('submit-json', {
+//     onEvent: function (name, evt) {
+//         if (name === "htmx:configRequest") {
+//             evt.detail.headers['Content-Type'] = "application/json";
+//         }
+//     },
+//     encodeParameters: function(xhr, parameters, elt) {
+//         xhr.overrideMimeType('text/json');
+//         // Garante que o JSON seja gerado exatamente como o objeto está,
+//         // sem tentar converter valores para string antes.
+//         return JSON.stringify(parameters);
+//     }
+// });
+
+// document.body.addEventListener('htmx:configRequest', function(evt) {
+//     // Verifica se é o formulário de perfil pelo endpoint ou ID
+//     if (evt.target.getAttribute('hx-put') === '/app/profile') {
+        
+//         // 1. Pega o elemento formulário
+//         const form = evt.target;
+        
+//         // 2. Chama sua função para gerar o JSON limpo
+//         const complexData = prepareFormData(form);
+        
+//         // 3. Sobrescreve os parâmetros que o HTMX enviaria.
+//         // Como você está usando hx-ext="json-enc", ele vai pegar esse objeto
+//         // e serializar automaticamente para JSON no corpo da requisição.
+//         evt.detail.parameters = complexData;
+        
+//         // Debug opcional: verifique no console o que está indo
+//         console.log("Enviando JSON customizado:", complexData);
+//     }
+// });
+
 function showCreateForm() {
     document.getElementById('portfolio-edit').classList.remove('hidden');
     document.getElementById('portfolio-empty').classList.add('hidden');
@@ -161,11 +195,50 @@ function addEducation() {
     container.insertAdjacentHTML('beforeend', html);
 }
 
-function prepareFormData(event) {
-    event.preventDefault();
-    const form = event.target.closest('form');
 
-    const data = {
+function sendFormData(data){
+     // Send via fetch with JSON
+    fetch('/app/profile', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => {
+            if (!response.ok) throw new Error('Falha na requisição');
+            return response.text();
+        })
+        .then(html => {
+            // 1. Atualiza o conteúdo da View
+            const viewElement = document.getElementById('portfolio-view');
+            viewElement.innerHTML = html;
+
+            // 2. Re-executa scripts que vieram no HTML novo (buscando dentro do viewElement)
+            const scripts = viewElement.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                newScript.textContent = script.textContent;
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript);
+            });
+
+            // 3. Volta para o modo de visualização (esconde o form, mostra o view)
+            // Se você já estiver no modo edit, chamar toggleEditMode deve inverter.
+            // Certifique-se que esta função faz o que você espera, ou force as classes aqui.
+            toggleEditMode(); 
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Erro ao atualizar portfólio');
+        });
+}
+
+
+
+function prepareFormData(form) {
+   console.log(form);
+  const data = {
         headline: form.querySelector('[name="headline"]').value,
         bio: form.querySelector('[name="bio"]').value,
         seniority: form.querySelector('[name="seniority"]').value,
@@ -187,38 +260,41 @@ function prepareFormData(event) {
         educations: []
     };
 
-    // Collect experiences
-    document.querySelectorAll('.experience-item').forEach(item => {
+    // Coletar Experiências
+    form.querySelectorAll('.experience-item').forEach(item => {
         const exp = {
             company: item.querySelector('[data-field="company"]').value,
             role: item.querySelector('[data-field="role"]').value,
+            // Cuidado com timezone no toISOString. Se for apenas data, considere enviar a string crua "YYYY-MM-DD"
             startDate: item.querySelector('[data-field="startDate"]').value ? new Date(item.querySelector('[data-field="startDate"]').value).toISOString() : null,
             endDate: item.querySelector('[data-field="endDate"]').value ? new Date(item.querySelector('[data-field="endDate"]').value).toISOString() : null,
             description: item.querySelector('[data-field="description"]').value,
             techStack: item.querySelector('[data-field="techStack"]').value.split(',').map(s => s.trim()).filter(s => s)
         };
+        // Pequena validação para não enviar objetos vazios
         if (exp.company || exp.role) data.experiences.push(exp);
     });
 
-    // Collect projects
-    document.querySelectorAll('.project-item').forEach(item => {
+    // Coletar Projetos
+    form.querySelectorAll('.project-item').forEach(item => {
         const providerVal = item.querySelector('[data-field="provider"]').value;
         const providerIdVal = item.querySelector('[data-field="providerId"]').value;
 
         const proj = {
             name: item.querySelector('[data-field="name"]').value,
             description: item.querySelector('[data-field="description"]').value,
+            // ATENÇÃO AQUI: Verifique se sua Struct Go espera "repoUrl" ou "repo_url"
             repoUrl: item.querySelector('[data-field="repoUrl"]').value,
             liveUrl: item.querySelector('[data-field="liveUrl"]').value,
             tags: item.querySelector('[data-field="tags"]').value.split(',').map(s => s.trim()).filter(s => s),
-            provided: providerVal || null,
+            provider: providerVal || null,
             providerId: providerIdVal || null
         };
         if (proj.name) data.projects.push(proj);
     });
 
-    // Collect educations
-    document.querySelectorAll('.education-item').forEach(item => {
+    // Coletar Educação
+    form.querySelectorAll('.education-item').forEach(item => {
         const edu = {
             institution: item.querySelector('[data-field="institution"]').value,
             degree: item.querySelector('[data-field="degree"]').value,
@@ -228,32 +304,18 @@ function prepareFormData(event) {
         };
         if (edu.institution) data.educations.push(edu);
     });
-
-    // Send via fetch with JSON
-    fetch('/app/profile', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('portfolio-view').innerHTML = html;
-            // Re-execute scripts in the new HTML
-            const scripts = document.getElementById('portfolio-container').querySelectorAll('script');
-            scripts.forEach(script => {
-                const newScript = document.createElement('script');
-                newScript.textContent = script.textContent;
-                document.body.appendChild(newScript);
-                document.body.removeChild(newScript);
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Erro ao atualizar portfólio');
-        });
+    console.log(data)
+   return data;
 }
+
+function submitProfileForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const data = prepareFormData(form);
+    sendFormData(data);
+}
+
+
 
 /**
  * Importa do GitHub verificando Provider e ProviderId
