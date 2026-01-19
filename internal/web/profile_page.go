@@ -73,7 +73,7 @@ func (module *WebService) CreatePortfolioFragment(ctx context.Context, w http.Re
 
 	var input portfolio.SaveProfileInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		log.Printf("CreateAndRenderPortfolioHTML decode error: %v", err)
+		log.Printf("CreateAndRenderPortfolioHTML decode error: %v. Body: %v", err, r.Body)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
@@ -106,7 +106,14 @@ func (module *WebService) UpdatePortfolioFragment(ctx context.Context, w http.Re
 	profile, err := module.portfolioService.UpdateProfile(ctx, userID, input)
 	if err != nil {
 		if errors.Is(err, portfolio.ErrProfileNotFound) {
-			http.Error(w, "Profile not found", http.StatusNotFound)
+			//http.Error(w, "Profile not found", http.StatusNotFound)
+			profile, err = module.portfolioService.CreateProfile(ctx, userID, input)
+			if err != nil {
+				log.Printf("UpdateAndRenderPortfolioHTML create error: %v", err)
+				http.Error(w, "Failed to create profile", http.StatusInternalServerError)
+				return
+			}
+			module.renderProfileContent(w, profile)
 			return
 		}
 		log.Printf("UpdateAndRenderPortfolioHTML error: %v", err)

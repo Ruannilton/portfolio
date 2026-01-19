@@ -2,6 +2,8 @@
  * portfolio-editor.js - Funções do editor de portfólio
  */
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
 function showCreateForm() {
     document.getElementById('portfolio-edit').classList.remove('hidden');
     document.getElementById('portfolio-empty').classList.add('hidden');
@@ -228,7 +230,7 @@ function prepareFormData(event) {
     });
 
     // Send via fetch with JSON
-    fetch('/portfolio/html', {
+    fetch('/app/profile', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -326,4 +328,261 @@ async function importGithubProjects() {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
+}
+
+async function handleLinkedinUploadEvent(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        let fullText = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => item.str).join('\n') + "\n";
+        }
+
+        const profileData = parseLinkedInProfile(fullText);
+        importLinkedInData(profileData);
+        console.log(profileData);
+
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function appendSkills(skills) {
+    const skillsInput = document.getElementById('skills-input');
+    const existingSkills = skillsInput.value.split(',').map(s => s.trim().toLowerCase());
+    skills.forEach(skill => {
+        if (!existingSkills.includes(skill.toLowerCase())) {
+            existingSkills.push(skill);
+        }
+    });
+    skillsInput.value = existingSkills.join(', ');
+}
+
+
+function importLinkedInData(profile) {
+    updateBio(profile.summary || '');
+    const socialLinks = {
+        linkedin: profile.contact.linkedin || '',
+        github: profile.contact.github || '',
+        website: ''
+    };
+    updateSocialLinks(socialLinks);
+    appendSkills(profile.skills || []);
+    profile.experience.forEach(exp => {
+        addExperience();
+        const expItems = document.querySelectorAll('.experience-item');
+        const lastExp = expItems[expItems.length - 1];
+        lastExp.querySelector('[data-field="company"]').value = exp.company || '';
+        lastExp.querySelector('[data-field="role"]').value = exp.role || '';
+        if (exp.start) lastExp.querySelector('[data-field="startDate"]').value = exp.start.toISOString().split('T')[0];
+        if (exp.end) lastExp.querySelector('[data-field="endDate"]').value = exp.end.toISOString().split('T')[0];
+        lastExp.querySelector('[data-field="description"]').value = exp.description || '';
+    });
+    profile.education.forEach(edu => {
+        addEducation();
+        const eduItems = document.querySelectorAll('.education-item');
+        const lastEdu = eduItems[eduItems.length - 1];
+        lastEdu.querySelector('[data-field="institution"]').value = edu.school || '';
+        lastEdu.querySelector('[data-field="degree"]').value = edu.degree || '';
+        if (edu.start) lastEdu.querySelector('[data-field="startDate"]').value = edu.start.toISOString().split('T')[0];
+        if (edu.end) lastEdu.querySelector('[data-field="endDate"]').value = edu.end.toISOString().split('T')[0];
+    });
+
+}
+
+const monthMap = {
+    'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5,
+    'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11,
+    'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+    'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+};
+
+function parsePTDate(dateStr) {
+    if (!dateStr) return null;
+    const str = dateStr.trim().toLowerCase();
+
+    const match = str.match(/([a-zç]+)\.?\s+(?:de\s+)?(\d{4})/);
+    if (match) {
+        const monthIndex = monthMap[match[1]];
+        const year = parseInt(match[2], 10);
+        if (monthIndex !== undefined && !isNaN(year)) return new Date(year, monthIndex, 1);
+    }
+    return null;
+}
+
+function parseDateRange(rawDateString) {
+    const parts = rawDateString.split(/\s+-\s+/);
+    return {
+        start: parsePTDate(parts[0]),
+        end: parts[1] ? parsePTDate(parts[1]) : null
+    };
+}
+
+function parseLinkedInProfile(rawText) {
+    const lines = rawText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .filter(line => !/^Page\s+\d+\s+of\s+\d+$/i.test(line) && line !== "Page");
+
+    const profile = {
+        contact: { email: "", linkedin: "", github: "" },
+        name: "",
+        headline: "",
+        summary: "",
+        skills: [],
+        languages: [],
+        experience: [],
+        education: []
+    };
+
+    const findIndex = (keyword) => lines.findIndex(l => l.toLowerCase() === keyword.toLowerCase());
+
+    const extractSection = (startKey, endKeys) => {
+        const start = findIndex(startKey);
+        if (start === -1) return [];
+        let end = lines.length;
+        for (const key of endKeys) {
+            const idx = lines.findIndex((l, i) => i > start && l.toLowerCase().startsWith(key.toLowerCase()));
+            if (idx !== -1 && idx < end) end = idx;
+        }
+        return lines.slice(start + 1, end);
+    };
+
+    // ==========================================================
+    // CORREÇÃO APLICADA AQUI (Extração de Contato)
+    // ==========================================================
+
+    // 1. Email
+    const emailMatch = rawText.match(/[\w.-]+@[\w.-]+\.\w+/);
+    if (emailMatch) profile.contact.email = emailMatch[0];
+
+    // 2. LinkedIn e Github (Iterando linhas para pegar quebras)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // LINKEDIN
+        if (line.includes("linkedin.com")) {
+            let fullUrl = line.trim();
+
+            // Verifica se a próxima linha parece ser continuação
+            // Ex: termina com "-" OU a próxima linha tem "(LinkedIn)"
+            if (lines[i + 1] && (fullUrl.endsWith("-") || lines[i + 1].includes("(LinkedIn)"))) {
+                // Pega a próxima linha e remove o rótulo "(LinkedIn)"
+                const continuation = lines[i + 1].replace("(LinkedIn)", "").trim();
+                fullUrl += continuation;
+                // Opcional: pular a próxima linha no loop se necessário, mas não crítico aqui
+            }
+            profile.contact.linkedin = fullUrl;
+        }
+
+        // GITHUB
+        if (line.includes("github.com")) {
+            // Mesma lógica se o github estiver quebrado e a proxima linha for "(Portfolio)"
+            let fullUrl = line.trim();
+            if (lines[i + 1] && lines[i + 1].includes("(Portfolio)")) {
+                const continuation = lines[i + 1].replace("(Portfolio)", "").trim();
+                fullUrl += continuation;
+            }
+            profile.contact.github = fullUrl;
+        }
+    }
+
+    // --- Resto da lógica (Nome, Resumo, etc...) ---
+
+    const resumoIndex = findIndex("Resumo");
+    if (resumoIndex > 2) {
+        let foundHeadline = false;
+        for (let i = resumoIndex - 1; i >= 0; i--) {
+            const line = lines[i];
+            if (line.includes("Brasil") || line.includes("Bahia") || line.includes("Janeiro") || line.includes("Paulo")) continue;
+            if (!foundHeadline) {
+                profile.headline = line;
+                foundHeadline = true;
+            } else if (!line.includes("@") && !line.includes("www") && !line.includes("Contato")) {
+                profile.name = line;
+                break;
+            }
+        }
+    }
+
+    profile.summary = extractSection("Resumo", ["Experiência", "Principais competências"]).join(" ");
+    profile.skills = extractSection("Principais competências", ["Languages", "Certifications", "Resumo", "Experiência"]);
+
+    const langLines = extractSection("Languages", ["Certifications", "Publications", "Resumo"]);
+    for (let i = 0; i < langLines.length; i++) {
+        if (langLines[i + 1] && langLines[i + 1].includes("(")) {
+            profile.languages.push(`${langLines[i]} ${langLines[i + 1]}`);
+            i++;
+        } else profile.languages.push(langLines[i]);
+    }
+
+    // Experiência
+    const expLines = extractSection("Experiência", ["Formação acadêmica", "Education"]);
+    const dateRegex = /([a-zç]+\s+de\s+\d{4})\s*-\s*(Present|o momento|[a-zç]+\s+de\s+\d{4})/i;
+    let currentJob = null;
+
+    for (let i = 0; i < expLines.length; i++) {
+        const line = expLines[i];
+        if (dateRegex.test(line)) {
+            if (currentJob) {
+                currentJob.description = currentJob.description.trim();
+                profile.experience.push(currentJob);
+            }
+            const dateObj = parseDateRange(line);
+            currentJob = {
+                company: expLines[i - 2] || "",
+                role: expLines[i - 1] || "",
+                ...dateObj,
+                location: "",
+                description: ""
+            };
+            if (expLines[i + 1] && expLines[i + 1].includes("(") && /\d/.test(expLines[i + 1])) {
+                currentJob.location = expLines[i + 2] || "";
+                i += 2;
+            } else {
+                currentJob.location = expLines[i + 1] || "";
+                i += 1;
+            }
+        } else {
+            if (currentJob && !line.toLowerCase().includes("page")) currentJob.description += line + "\n";
+        }
+    }
+    if (currentJob) {
+        currentJob.description = currentJob.description.trim();
+        profile.experience.push(currentJob);
+    }
+
+    // Formação
+    const eduLines = extractSection("Formação acadêmica", ["Page", "Certifications", "Publications"]);
+    if (eduLines) {
+        for (let i = 0; i < eduLines.length; i++) {
+            let line = eduLines[i].trim();
+            if (line.startsWith("·") || line.startsWith("(") || /^\W*\(?[a-zç]+\s+de\s+\d{4}/i.test(line)) {
+                let fullDate = line;
+                let offset = 0;
+                while (!fullDate.includes(")") && (i + offset + 1) < eduLines.length) {
+                    offset++;
+                    fullDate += " " + eduLines[i + offset].trim();
+                }
+                const cleanDateStr = fullDate.replace(/[·()]/g, "").trim();
+                const dateObj = parseDateRange(cleanDateStr);
+                const degree = eduLines[i - 1] || "";
+                const school = eduLines[i - 2] || "";
+
+                if (degree && school) {
+                    profile.education.push({ school: school.trim(), degree: degree.trim(), ...dateObj });
+                }
+                i += offset;
+            }
+        }
+    }
+
+    return profile;
 }
