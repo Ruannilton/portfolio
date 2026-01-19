@@ -14,6 +14,7 @@ type PortfolioService struct {
 	userRepo auth.UserRepository
 }
 
+var localProjectProvider string = "Local"
 type SaveProfileInput struct {
 	Headline          string       `json:"headline"`
 	Bio               string       `json:"bio"`
@@ -106,6 +107,13 @@ func (s *PortfolioService) DeleteProfile(ctx context.Context, userID string) err
 
 // Helper para mapear DTO -> Entity
 func (s *PortfolioService) mapInputToProfile(p *Profile, input SaveProfileInput) {
+	
+	for _, proj := range input.Projects {
+		if proj.Provider == nil{
+			proj.Provider = &localProjectProvider
+		}
+	}
+
 	p.Headline = input.Headline
 	p.Bio = input.Bio
 	p.Seniority = input.Seniority

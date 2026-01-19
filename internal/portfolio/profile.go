@@ -100,6 +100,8 @@ type Project struct {
 	RepoURL     string   `json:"repoUrl"`
 	LiveURL     string   `json:"liveUrl"`
 	Tags        []string `json:"tags"`
+	Provider  	*string  `json:"provided,omitempty"` // e.g., GitHub, GitLab, Local
+	ProviderId  *string  `json:"providerId,omitempty"` // e.g., ID from the provider
 }
 type Projects []Project
 

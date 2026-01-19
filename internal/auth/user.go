@@ -18,6 +18,7 @@ type User struct {
 	ResetToken   *string
 	CreatedAt    time.Time
 	ProfileImage *string
+	GithubAcessToken *string
 }
 
 func hashPassword(password string) (string, error) {
@@ -78,4 +79,18 @@ func (u *User) SetPassword(newPassword string) error {
 	u.PasswordHash = &passwordHash
 	u.ResetToken = nil
 	return nil
+}
+
+func (u *User) SetGithubAccessToken(accessToken string) error {
+	// hash, err := hashPassword(accessToken)
+	// if err != nil {
+	// 	return ErrFailedToGenerateAccessTokenHash
+	// }
+	// accessTokoenHash := string(hash)
+	u.GithubAcessToken = &accessToken
+	return nil
+}
+
+func (u *User)  GetGithubAccessToken() *string {
+	return u.GithubAcessToken
 }

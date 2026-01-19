@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 
@@ -18,15 +19,31 @@ type AutenticatedUser struct {
 	ProfileImageURL *string
 }
 
-func (service *JWTService) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (service *JWTService) RequiredAutenticationMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		autenticatedUser := GetAutenticatedUserFromRequest(r, service)
-
-		ctx := context.WithValue(r.Context(), AutenticatedUserKey, autenticatedUser)
+		if autenticatedUser == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		log.Printf("[RequiredAutenticationMiddleware] User %s authenticated successfully", autenticatedUser.ID)
+		ctx := context.WithValue(r.Context(), AutenticatedUserKey, *autenticatedUser)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
+
+func (service *JWTService) OptionalAutenticationMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		autenticatedUser := GetAutenticatedUserFromRequest(r, service)
+		if autenticatedUser == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		ctx := context.WithValue(r.Context(), AutenticatedUserKey, *autenticatedUser)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
+
 
 func GetUserCurrentUser(ctx context.Context) *AutenticatedUser {
 	user, _ := ctx.Value(AutenticatedUserKey).(AutenticatedUser)
@@ -93,6 +110,7 @@ func GetJwtTokenFromRequest(r *http.Request) string {
 
 	cookie, err := r.Cookie("access_token")
 	if err == nil {
+		log.Printf("Found JWT token in cookie")
 		return cookie.Value
 	}
 
@@ -112,7 +130,7 @@ func GetJwtTokenFromRequest(r *http.Request) string {
 
 func GetAutenticatedUserFromRequest(r *http.Request, jwtService *JWTService) *AutenticatedUser {
 	token := GetJwtTokenFromRequest(r)
-
+	
 	if token == "" {
 		return nil
 	}

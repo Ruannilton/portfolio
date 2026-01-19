@@ -24,8 +24,8 @@ type userRepo struct {
 func (u *userRepo) Create(ctx context.Context, user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	query := `
-		INSERT INTO users (id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO users (id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image, github_access_token)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 	_, err := u.db.ExecContext(ctx, query,
 		user.ID,
@@ -38,6 +38,7 @@ func (u *userRepo) Create(ctx context.Context, user *User) error {
 		user.ResetToken,
 		user.CreatedAt,
 		user.ProfileImage,
+		user.GithubAcessToken,
 	)
 	return err
 }
@@ -46,7 +47,7 @@ func (u *userRepo) Create(ctx context.Context, user *User) error {
 func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error) {
 	email = strings.ToLower(email)
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image, github_access_token
 		FROM users
 		WHERE email = $1
 		LIMIT 1
@@ -63,6 +64,7 @@ func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 		&user.ResetToken,
 		&user.CreatedAt,
 		&user.ProfileImage,
+		&user.GithubAcessToken,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -76,7 +78,7 @@ func (u *userRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 func (u *userRepo) Find(ctx context.Context, id string) (*User, error) {
 	
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image, github_access_token
 		FROM users
 		WHERE id = $1
 		LIMIT 1
@@ -93,6 +95,7 @@ func (u *userRepo) Find(ctx context.Context, id string) (*User, error) {
 		&user.ResetToken,
 		&user.CreatedAt,
 		&user.ProfileImage,
+		&user.GithubAcessToken,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -109,8 +112,8 @@ func (u *userRepo) Save(ctx context.Context, user *User) error {
 	query := `
 		UPDATE users
 		SET first_name = $1, last_name = $2, email = $3, password_hash = $4, 
-		    provider = $5, provider_id = $6, reset_token = $7, profile_image = $8
-		WHERE id = $9
+		    provider = $5, provider_id = $6, reset_token = $7, profile_image = $8, github_access_token = $9
+		WHERE id = $10
 	`
 	result, err := u.db.ExecContext(ctx, query,
 		user.FirstName,
@@ -121,6 +124,7 @@ func (u *userRepo) Save(ctx context.Context, user *User) error {
 		user.ProviderID,
 		user.ResetToken,
 		user.ProfileImage,
+		user.GithubAcessToken,
 		user.ID,
 	)
 	if err != nil {
@@ -138,7 +142,7 @@ func (u *userRepo) Save(ctx context.Context, user *User) error {
 
 func (u *userRepo) FindByResetToken(ctx context.Context, token string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image, github_access_token
 		FROM users
 		WHERE reset_token = $1
 		LIMIT 1
@@ -155,6 +159,7 @@ func (u *userRepo) FindByResetToken(ctx context.Context, token string) (*User, e
 		&user.ResetToken,
 		&user.CreatedAt,
 		&user.ProfileImage,
+		&user.GithubAcessToken,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -168,7 +173,7 @@ func (u *userRepo) FindByResetToken(ctx context.Context, token string) (*User, e
 // FindByProviderID implements [UserRepository].
 func (u *userRepo) FindByProviderID(ctx context.Context, provider, providerID string) (*User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image
+		SELECT id, first_name, last_name, email, password_hash, provider, provider_id, reset_token, created_at, profile_image, github_access_token
 		FROM users
 		WHERE provider = $1 AND provider_id = $2
 		LIMIT 1
@@ -185,6 +190,7 @@ func (u *userRepo) FindByProviderID(ctx context.Context, provider, providerID st
 		&user.ResetToken,
 		&user.CreatedAt,
 		&user.ProfileImage,
+		&user.GithubAcessToken,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

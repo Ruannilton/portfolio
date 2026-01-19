@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"portfolio/internal/config"
 	"portfolio/internal/jwt"
@@ -84,6 +85,10 @@ func NewAuthService(cfg *config.Config, repo UserRepository, jwtService *jwt.JWT
 
 	gothic.Store = store
 	redirectUrl := cfg.AppRedirectURL
+
+	log.Println("Github client: ", githubClientID)
+	log.Println("Github secret: ", githubClientSecret)
+	log.Println("Redirect URL: ", redirectUrl+"/auth/github/callback")
 
 	goth.UseProviders(
 		google.New(googleClientID, googleClientSecret, redirectUrl+"/auth/google/callback", "email", "profile"),
@@ -203,6 +208,11 @@ func (s *AuthService) CompleteOAuthLogin(ctx context.Context, gothUser goth.User
 		user.ProviderID = &gothUser.UserID
 		user.ProfileImage = &gothUser.AvatarURL
 
+		if gothUser.Provider == "github" {
+             // O token vem aqui. Recomendo criptografar antes de salvar (ver nota abaixo)
+            user.SetGithubAccessToken(gothUser.AccessToken) 
+        }
+
 		if saveErr := s.repo.Save(ctx, user); saveErr != nil {
 			return nil, saveErr
 		}
@@ -216,6 +226,11 @@ func (s *AuthService) CompleteOAuthLogin(ctx context.Context, gothUser goth.User
 			gothUser.UserID,
 			&gothUser.AvatarURL,
 		)
+
+		if gothUser.Provider == "github" {
+             // O token vem aqui. Recomendo criptografar antes de salvar (ver nota abaixo)
+            user.SetGithubAccessToken(gothUser.AccessToken) 
+        }
 
 		if createErr := s.repo.Create(ctx, user); createErr != nil {
 			return nil, createErr

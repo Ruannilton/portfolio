@@ -11,6 +11,7 @@ import (
 	"portfolio/internal/auth"
 	"portfolio/internal/config"
 	"portfolio/internal/database"
+	"portfolio/internal/sync"
 	"portfolio/internal/jwt"
 	"portfolio/internal/portfolio"
 	"portfolio/internal/search"
@@ -25,6 +26,7 @@ type Application struct {
 	authModule     *auth.AuthModule
 	porfolioModule *portfolio.PortfolioModule
 	webModule      *web.WebModule
+	githubSyncModule *sync.GithubSyncModule
 }
 
 func NewApplication() *Application {
@@ -61,12 +63,17 @@ func NewApplication() *Application {
 	// web
 	webModule := web.NewWebModule(authService, &jwtService, portfolioService, searchService)
 
+	// github sync
+	githubSyncModule := sync.NewGithubSyncModule(&jwtService, userRepository)
+
+
 	app := &Application{
 		config:         *cfg,
 		db:             db,
 		authModule:     authModule,
 		porfolioModule: porfolioModule,
 		webModule:      webModule,
+		githubSyncModule: githubSyncModule,
 	}
 	return app
 }
@@ -74,12 +81,12 @@ func NewApplication() *Application {
 func (s *Application) RegisterRoutes() http.Handler {
 	router := mux.NewRouter()
 
+	router.PathPrefix("/sync").Handler(http.StripPrefix("/sync", s.githubSyncModule.RegisterRoutes()))
 	s.webModule.SetupFrontEnd(router)
-
+	
 	router.HandleFunc("/health", s.healthHandler)
 	router.PathPrefix("/auth").Handler(http.StripPrefix("/auth", s.authModule.RegisterAuthRoutes()))
 	router.PathPrefix("/portfolio").Handler(http.StripPrefix("/portfolio", s.porfolioModule.RegisterRoutes()))
-
 	return s.corsMiddleware(router)
 }
 

@@ -24,12 +24,11 @@ func NewPortfolioModule(service *PortfolioService, jwtService *jwt.JWTService) *
 func (module *PortfolioModule) RegisterRoutes() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/me", module.jwtService.AuthMiddleware(module.getMyProfile)).Methods("GET")
-	//router.HandleFunc("/{portfolioId}", module.jwtService.AuthMiddleware(module.getProfile)).Methods("GET")
-	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.createProfile)).Methods("POST")
-	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.updateProfile)).Methods("PUT")
-	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.patchProfile)).Methods("PATCH")
-	router.HandleFunc("/", module.jwtService.AuthMiddleware(module.deleteProfile)).Methods("DELETE")
+	router.HandleFunc("/me", module.jwtService.RequiredAutenticationMiddleware(module.getMyProfile)).Methods("GET")
+	router.HandleFunc("/", module.jwtService.RequiredAutenticationMiddleware(module.createProfile)).Methods("POST")
+	router.HandleFunc("/", module.jwtService.RequiredAutenticationMiddleware(module.updateProfile)).Methods("PUT")
+	router.HandleFunc("/", module.jwtService.RequiredAutenticationMiddleware(module.patchProfile)).Methods("PATCH")
+	router.HandleFunc("/", module.jwtService.RequiredAutenticationMiddleware(module.deleteProfile)).Methods("DELETE")
 
 	return router
 }

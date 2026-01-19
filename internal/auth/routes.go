@@ -33,7 +33,7 @@ func (module *AuthModule) RegisterAuthRoutes() *mux.Router {
 	router.HandleFunc("/forgot-password", module.forgotPassword).Methods("POST")
 	router.HandleFunc("/reset-password", module.resetPassword).Methods("POST")
 
-	router.HandleFunc("/me", module.jwtService.AuthMiddleware(module.me)).Methods("GET")
+	router.HandleFunc("/me", module.jwtService.RequiredAutenticationMiddleware(module.me)).Methods("GET")
 
 	return router
 }

@@ -1,0 +1,91 @@
+services:
+  psql_bp:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - .dev.env
+    environment:
+      POSTGRES_DB: ${BLUEPRINT_DB_DATABASE}
+      POSTGRES_USER: ${BLUEPRINT_DB_USERNAME}
+      POSTGRES_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
+    ports:
+      - "${BLUEPRINT_DB_PORT}:5432"
+    volumes:
+      - psql_volume_bp:/var/lib/postgresql
+    # Adicionado: Verifica se o Postgres está pronto para conexões
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BLUEPRINT_DB_USERNAME} -d ${BLUEPRINT_DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal-network
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.10 
+    restart: unless-stopped
+    env_file:
+      - .dev.env
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: ${MEILI_ENV}
+    ports:
+      - "${MEILI_PORT}:7700"
+    volumes:
+      - meili_data:/meili_data
+    # Adicionado: Verifica se a rota /health retorna status 200
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: portfolio:latest
+    restart: unless-stopped
+    depends_on:
+      psql_bp:
+        condition: service_healthy # Espera o check do Postgres passar
+      meilisearch:
+        condition: service_healthy # Espera o check do Meilisearch passar
+    env_file:
+      - .dev.env
+    environment:
+      PORT: "${PORT:-8080}"
+      APP_ENV: "docker"
+      APP_REDIRECT_URL: "${APP_REDIRECT_URL}"
+      BLUEPRINT_DB_HOST: "psql_bp"
+      BLUEPRINT_DB_PORT: "${BLUEPRINT_DB_PORT:-5432}"
+      BLUEPRINT_DB_DATABASE: "${BLUEPRINT_DB_DATABASE}"
+      BLUEPRINT_DB_USERNAME: "${BLUEPRINT_DB_USERNAME}"
+      BLUEPRINT_DB_PASSWORD: "${BLUEPRINT_DB_PASSWORD}"
+      BLUEPRINT_DB_SCHEMA: "public"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
+      GITHUB_CLIENT_ID: "${GITHUB_CLIENT_ID}"
+      GITHUB_CLIENT_SECRET: "${GITHUB_CLIENT_SECRET}"
+      SESSION_KEY: "${SESSION_KEY}"
+      SESSION_MAX_AGE: "${SESSION_MAX_AGE:-86400}"
+      IS_PRODUCTION: "${IS_PRODUCTION:-false}"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
+      JWT_ISSUER: "portfolio_app"
+      MEILI_HOST: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
+    ports:
+      - "${PORT}:8080"
+      - "40000:40000"
+    networks:
+      - internal-network
+
+volumes:
+  psql_volume_bp:
+  meili_data:
+
+networks:
+  internal-network:     # Criação da rede privada
+    driver: bridge
