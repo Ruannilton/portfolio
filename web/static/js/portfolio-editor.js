@@ -64,6 +64,17 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+function updateBio(content) {
+     const textArea = document.getElementById('bio-textarea');
+     textArea.value = escapeHtml(content);
+}
+
+function updateSocialLinks(links) {
+    document.getElementById('social_links.linkedin').value = links.linkedin || '';
+    document.getElementById('social_links.github').value = links.github || '';
+    document.getElementById('social_links.website').value = links.website || '';
+}
+
 function addProject(data = null) {
     const container = document.getElementById('projects-container');
 
@@ -291,6 +302,13 @@ async function importGithubProjects() {
             });
         }
 
+        updateBio(data.bio || '');
+        const socialLinks = {
+            linkedin: data.linkedinUrl ? data.linkedinUrl : '',
+            github: data.githubUrl ? data.githubUrl : '',
+            website: data.genericUrl ? data.genericUrl : ''
+        };
+        updateSocialLinks(socialLinks);
         if (addedCount > 0) {
             alert(`${addedCount} projetos novos adicionados!`);
         } else {

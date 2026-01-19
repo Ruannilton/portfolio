@@ -20,7 +20,7 @@
                 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                    <textarea name="bio" rows="3"
+                    <textarea id="bio-textarea" name="bio" rows="3"
                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Conte um pouco sobre você...">{{.Bio}}</textarea>
                 </div>
@@ -105,21 +105,21 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
-                    <input type="url" name="social_links.linkedin" value="{{.SocialLinks.LinkedIn}}"
+                    <input type="url" id="social_links.linkedin" name="social_links.linkedin" value="{{.SocialLinks.LinkedIn}}"
                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="https://linkedin.com/in/...">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">GitHub</label>
-                    <input type="url" name="social_links.github" value="{{.SocialLinks.GitHub}}"
+                    <input type="url" id="social_links.github" name="social_links.github" value="{{.SocialLinks.GitHub}}"
                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="https://github.com/...">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                    <input type="url" name="social_links.website" value="{{.SocialLinks.Website}}"
+                    <input type="url" id="social_links.website" name="social_links.website" value="{{.SocialLinks.Website}}"
                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="https://...">
                 </div>

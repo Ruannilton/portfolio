@@ -14,36 +14,42 @@ type LanguageNode struct {
 	Size int `graphql:"size"`
 	Node struct {
 		Name  string `graphql:"name"`
-		Color string  `graphql:"color"`
+		Color string `graphql:"color"`
 	} `graphql:"node"`
 }
 
 type Repository struct {
-	Name            string `graphql:"name"`
-	DatabaseId      int `graphql:"databaseId"`
-	Description     string `graphql:"description"`
-	Url             string `graphql:"url"`
-	StargazerCount int `graphql:"stargazerCount"`
-	IsFork          bool `graphql:"isFork"`
-	Languages       struct {
-		Edges []LanguageNode  `graphql:"edges"`
+	Name           string `graphql:"name"`
+	DatabaseId     int    `graphql:"databaseId"`
+	Description    string `graphql:"description"`
+	Url            string `graphql:"url"`
+	StargazerCount int    `graphql:"stargazerCount"`
+	IsFork         bool   `graphql:"isFork"`
+	Languages      struct {
+		Edges []LanguageNode `graphql:"edges"`
 	} `graphql:"languages(first: 5, orderBy: {field: SIZE, direction: DESC})"`
 	RepositoryTopics struct {
 		Nodes []struct {
 			Topic struct {
-				Name string  `graphql:"name"`
-			}  `graphql:"topic"`
+				Name string `graphql:"name"`
+			} `graphql:"topic"`
 		} `graphql:"nodes"`
 	} `graphql:"repositoryTopics(first: 5)"`
 }
 
 type GithubQuery struct {
 	Viewer struct {
-		Login        string `graphql:"login"`
-		Bio          string `graphql:"bio"`
-		AvatarUrl    string `graphql:"avatarUrl"`
-		Company      string `graphql:"company"`
-		Location     string `graphql:"location"`
+		Login          string `graphql:"login"`
+		Bio            string `graphql:"bio"`
+		AvatarUrl      string `graphql:"avatarUrl"`
+		Company        string `graphql:"company"`
+		Location       string `graphql:"location"`
+		SocialAccounts struct {
+			Nodes []struct {
+				Url      string `graphql:"url"`
+				Provider string `graphql:"provider"`
+			} `graphql:"nodes"`
+		} `graphql:"socialAccounts(first: 10)"`
 		Repositories struct {
 			Nodes []Repository
 		} `graphql:"repositories(first: 100, privacy: PUBLIC, isFork: false, ownerAffiliations: OWNER, orderBy: {field: PUSHED_AT, direction: DESC})"`
@@ -63,13 +69,16 @@ type GithubRepository struct {
 	Url         string
 	Languages   []string
 	Topics      []string
-	ProviderId string
+	ProviderId  string
 }
 
 type GithubProfile struct {
-	Bio          string `json:"bio"`
-	TechRadar    []TechRadarStats `json:"techRadar"`
+	Bio          string             `json:"bio"`
+	TechRadar    []TechRadarStats   `json:"techRadar"`
 	Repositories []GithubRepository `json:"repositories"`
+	LinkedinUrl  string             `json:"linkedinUrl,omitempty"`
+	GithubUrl    string             `json:"githubUrl,omitempty"`
+	GenericUrl   string             `json:"genericUrl,omitempty"`
 }
 
 func SyncGithubData(ctx context.Context, token string) (*GithubProfile, error) {
@@ -92,10 +101,27 @@ func SyncGithubData(ctx context.Context, token string) (*GithubProfile, error) {
 
 	techRadar := calculateTechRadar(query)
 	repositories := extractRepositories(query)
+
+	var linkedinUrl string
+	var genericUrl string
+	for _, acc := range query.Viewer.SocialAccounts.Nodes {
+		if acc.Provider == "LINKEDIN" {
+			linkedinUrl = acc.Url
+		}
+		if acc.Provider == "GENERIC" {
+			genericUrl = acc.Url
+		}	
+	}
+
+	githubUrl := fmt.Sprintf("https://github.com/%s", query.Viewer.Login)
+
 	profile := &GithubProfile{
 		Bio:          query.Viewer.Bio,
 		TechRadar:    techRadar,
 		Repositories: repositories,
+		LinkedinUrl:  linkedinUrl,
+		GithubUrl:    githubUrl,
+		GenericUrl:   genericUrl,
 	}
 	return profile, nil
 }
