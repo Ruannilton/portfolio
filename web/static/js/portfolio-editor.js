@@ -21,18 +21,18 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 // document.body.addEventListener('htmx:configRequest', function(evt) {
 //     // Verifica se é o formulário de perfil pelo endpoint ou ID
 //     if (evt.target.getAttribute('hx-put') === '/app/profile') {
-        
+
 //         // 1. Pega o elemento formulário
 //         const form = evt.target;
-        
+
 //         // 2. Chama sua função para gerar o JSON limpo
 //         const complexData = prepareFormData(form);
-        
+
 //         // 3. Sobrescreve os parâmetros que o HTMX enviaria.
 //         // Como você está usando hx-ext="json-enc", ele vai pegar esse objeto
 //         // e serializar automaticamente para JSON no corpo da requisição.
 //         evt.detail.parameters = complexData;
-        
+
 //         // Debug opcional: verifique no console o que está indo
 //         console.log("Enviando JSON customizado:", complexData);
 //     }
@@ -75,9 +75,18 @@ function addExperience() {
                 <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
                 <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+            <div class="grid grid-cols-2 gap-2 items-end">
+                <div class="flex items-center h-full">
+                    <label class="block text-sm font-medium text-gray-700 flex items-center">
+                        Trabalha Aqui
+                    </label>
+                    <input type="checkbox" data-field="workingHere" class="mr-2 leading-tight">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                    <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+ 
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
@@ -92,6 +101,7 @@ function addExperience() {
     </div>
 `;
     container.insertAdjacentHTML('beforeend', html);
+    setupExperienceEndDateTriggers();
 }
 
 function escapeHtml(str) {
@@ -196,8 +206,8 @@ function addEducation() {
 }
 
 
-function sendFormData(data){
-     // Send via fetch with JSON
+function sendFormData(data) {
+    // Send via fetch with JSON
     fetch('/app/profile', {
         method: 'PUT',
         headers: {
@@ -226,7 +236,7 @@ function sendFormData(data){
             // 3. Volta para o modo de visualização (esconde o form, mostra o view)
             // Se você já estiver no modo edit, chamar toggleEditMode deve inverter.
             // Certifique-se que esta função faz o que você espera, ou force as classes aqui.
-            toggleEditMode(); 
+            toggleEditMode();
         })
         .catch(error => {
             console.error(error);
@@ -237,8 +247,8 @@ function sendFormData(data){
 
 
 function prepareFormData(form) {
-   console.log(form);
-  const data = {
+    console.log(form);
+    const data = {
         headline: form.querySelector('[name="headline"]').value,
         bio: form.querySelector('[name="bio"]').value,
         seniority: form.querySelector('[name="seniority"]').value,
@@ -305,7 +315,7 @@ function prepareFormData(form) {
         if (edu.institution) data.educations.push(edu);
     });
     console.log(data)
-   return data;
+    return data;
 }
 
 function submitProfileForm(event) {
@@ -648,3 +658,49 @@ function parseLinkedInProfile(rawText) {
 
     return profile;
 }
+
+
+function setupExperienceEndDateTriggers() {
+    // Experiências
+    document.querySelectorAll('.experience-item').forEach(function (item) {
+        const workingHereCheckbox = item.querySelector('input[data-field="workingHere"]');
+        const endDateInput = item.querySelector('input[data-field="endDate"]');
+        if (!workingHereCheckbox || !endDateInput) return;
+        const endDateBlock = endDateInput.closest('div');
+        function toggleEndDate() {
+            if (workingHereCheckbox.checked) {
+                endDateInput.value = '';
+                endDateInput.disabled = true;
+                endDateBlock.classList.add('hidden');
+            } else {
+                endDateInput.disabled = false;
+                endDateBlock.classList.remove('hidden');
+            }
+        }
+        toggleEndDate();
+        workingHereCheckbox.addEventListener('change', toggleEndDate);
+    });
+
+    // Formações
+    document.querySelectorAll('.education-item').forEach(function (item) {
+        const studyingHereCheckbox = item.querySelector('input[data-field="studyingHere"]');
+        const endDateInput = item.querySelector('input[data-field="endDate"]');
+        if (!studyingHereCheckbox || !endDateInput) return;
+        const endDateBlock = endDateInput.closest('div');
+        function toggleEndDateEdu() {
+            if (studyingHereCheckbox.checked) {
+                endDateInput.value = '';
+                endDateInput.disabled = true;
+                endDateBlock.classList.add('hidden');
+            } else {
+                endDateInput.disabled = false;
+                endDateBlock.classList.remove('hidden');
+            }
+        }
+        toggleEndDateEdu();
+        studyingHereCheckbox.addEventListener('change', toggleEndDateEdu);
+    });
+}
+
+// Inicializa ao carregar a página
+document.addEventListener('DOMContentLoaded', setupExperienceEndDateTriggers);
