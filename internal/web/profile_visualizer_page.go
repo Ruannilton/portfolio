@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"log"
@@ -78,7 +79,14 @@ func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.Re
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.ExecuteTemplate(w, "base", viewData)
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "base", viewData); err != nil {
+		log.Printf("Error executing show_profile template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+	buf.WriteTo(w)
 }
 
 func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, profileID string) {
@@ -120,5 +128,12 @@ func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.Respo
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.ExecuteTemplate(w, "portfolio_print", viewData)
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "portfolio_print", viewData); err != nil {
+		log.Printf("Error executing print_portfolio template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+	buf.WriteTo(w)
 }

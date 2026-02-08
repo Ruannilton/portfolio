@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,7 +15,10 @@ import (
 
 func (m *WebModule) profilePageEndpoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	m.webService.RenderAppPage(ctx, w)
+	if err := m.webService.RenderAppPage(ctx, w); err != nil {
+		log.Printf("Error rendering profile page: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func (m *WebModule) createProfileEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +68,15 @@ func (module *WebService) RenderAppPage(ctx context.Context, w io.Writer) error 
 		log.Printf("Error parsing my_profile template: %v", err)
 		return err
 	}
-	return tmpl.ExecuteTemplate(w, "base", viewData)
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "base", viewData); err != nil {
+		log.Printf("Error executing my_profile template: %v", err)
+		return err
+	}
+
+	_, err = buf.WriteTo(w)
+	return err
 }
 
 func (module *WebService) CreatePortfolioFragment(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -132,5 +144,13 @@ func (module *WebService) renderProfileContent(w http.ResponseWriter, profile *p
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.ExecuteTemplate(w, "portfolio_view", profile)
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "portfolio_view", profile); err != nil {
+		log.Printf("Error executing portfolio_view template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+
+	buf.WriteTo(w)
 }

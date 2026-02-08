@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"log"
 	"net/http"
@@ -9,13 +10,19 @@ import (
 )
 
 func (m *WebModule) searchPageEndpoint(w http.ResponseWriter, r *http.Request) {
-	RenderSearchPage(w)
+	if err := RenderSearchPage(w); err != nil {
+		log.Printf("Error rendering search page: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func (m *WebModule) searchResultHandler(w http.ResponseWriter, r *http.Request) {
 	searchQuery := extractSearchForm(r)
 	ctx := r.Context()
-	RenderPortfolioSearchResults(ctx, w, searchQuery, m.webService.searchService)
+	if err := RenderPortfolioSearchResults(ctx, w, searchQuery, m.webService.searchService); err != nil {
+		log.Printf("Error rendering search results: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func RenderSearchPage(w http.ResponseWriter) error {
@@ -24,7 +31,13 @@ func RenderSearchPage(w http.ResponseWriter) error {
 		log.Printf("Error parsing search page template: %v", err)
 		return err
 	}
-	return tmpl.ExecuteTemplate(w, "base", nil)
+	
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "base", nil); err != nil {
+		return err
+	}
+	_, err = buf.WriteTo(w)
+	return err
 }
 
 func RenderPortfolioSearchResults(ctx context.Context, w http.ResponseWriter, query search.ProfileSearchQueryBuilder, searchService search.SearchService) error {
@@ -32,7 +45,6 @@ func RenderPortfolioSearchResults(ctx context.Context, w http.ResponseWriter, qu
 
 	if err != nil {
 		log.Printf("RenderPortfolioSearchResults error: %v", err)
-		http.Error(w, "Failed to search profiles", http.StatusInternalServerError)
 		return err
 	}
 
@@ -40,9 +52,13 @@ func RenderPortfolioSearchResults(ctx context.Context, w http.ResponseWriter, qu
 	tmpl, err := web.ParseTemplateFragment("components/profile_search_response_card.html")
 	if err != nil {
 		log.Printf("Error parsing search results template: %v", err)
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return err
 	}
 
-	return tmpl.ExecuteTemplate(w, "profile_search_results", searchResult)
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "profile_search_results", searchResult); err != nil {
+		return err
+	}
+	_, err = buf.WriteTo(w)
+	return err
 }

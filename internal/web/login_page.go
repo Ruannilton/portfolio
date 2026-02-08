@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"net/http"
@@ -20,7 +21,10 @@ func (m *WebModule) loginPageEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	RenderLoginPage(w)
+	if err := RenderLoginPage(w); err != nil {
+		log.Printf("Error rendering login page: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func  RenderLoginPage(w io.Writer) error {
@@ -30,6 +34,11 @@ func  RenderLoginPage(w io.Writer) error {
 		log.Printf("Error parsing login template: %v", err)
 		return err
 	}
-	tmpl.ExecuteTemplate(w, "base", nil)
-	return nil
+	
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "base", nil); err != nil {
+		return err
+	}
+	_, err = buf.WriteTo(w)
+	return err
 }
