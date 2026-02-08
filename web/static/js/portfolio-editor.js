@@ -58,51 +58,83 @@ function removeItem(button, type) {
     button.closest(`.${type}-item`).remove();
 }
 
+function toggleItemDrawer(header) {
+    const item = header.closest('.experience-item, .project-item, .education-item');
+    const content = item.querySelector('.drawer-content');
+    const chevron = item.querySelector('.drawer-chevron');
+    
+    content.classList.toggle('hidden');
+    chevron.classList.toggle('-rotate-90');
+}
+
+function updateDrawerTitle(input) {
+    const item = input.closest('.experience-item, .project-item, .education-item');
+    const titleSpan = item.querySelector('.drawer-title');
+    const val = input.value.trim();
+    
+    if (val) {
+        titleSpan.textContent = val;
+    } else {
+        if (item.classList.contains('experience-item')) titleSpan.textContent = 'Nova Experiência';
+        else if (item.classList.contains('project-item')) titleSpan.textContent = 'Novo Projeto';
+        else if (item.classList.contains('education-item')) titleSpan.textContent = 'Nova Formação';
+    }
+}
+
 function addExperience() {
     const container = document.getElementById('experiences-container');
     const html = `
-    <div class="experience-item border border-gray-200 rounded-lg p-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                <input type="text" data-field="company" class="w-full p-2 border border-gray-300 rounded-lg">
+    <div class="experience-item border border-gray-200 rounded-lg overflow-hidden">
+        <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform duration-200 drawer-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <span class="font-medium text-gray-700 drawer-title">Nova Experiência</span>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
-                <input type="text" data-field="role" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-                <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div class="grid grid-cols-2 gap-2 items-end">
-                <div class="flex items-center h-full">
-                    <label class="block text-sm font-medium text-gray-700 flex items-center">
-                        Trabalha Aqui
-                    </label>
-                    <input type="checkbox" data-field="workingHere" class="mr-2 leading-tight">
+            <button type="button" onclick="event.stopPropagation(); removeItem(this, 'experience')"
+                class="text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+        </div>
+        <div class="drawer-content p-4 border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                    <input type="text" data-field="company" oninput="updateDrawerTitle(this)" class="w-full p-2 border border-gray-300 rounded-lg">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                    <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                    <input type="text" data-field="role" class="w-full p-2 border border-gray-300 rounded-lg">
                 </div>
- 
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por vírgula)</label>
-                <input type="text" data-field="techStack" class="w-full p-2 border border-gray-300 rounded-lg">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                    <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-2 items-end">
+                    <div class="flex items-center h-full">
+                        <label class="block text-sm font-medium text-gray-700 flex items-center">
+                            Trabalha Aqui
+                        </label>
+                        <input type="checkbox" data-field="workingHere" class="mr-2 leading-tight">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                        <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por vírgula)</label>
+                    <input type="text" data-field="techStack" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
             </div>
         </div>
-        <button type="button" onclick="removeItem(this, 'experience')" class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
     </div>
 `;
     container.insertAdjacentHTML('beforeend', html);
     setupExperienceEndDateTriggers();
 }
+
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -140,70 +172,89 @@ function addProject(data = null) {
     const providerId = data ? (data.providerId || '') : '';
 
     const html = `
-    <div class="project-item border border-gray-200 rounded-lg p-4 animate-fade-in">
-        
-        <input type="hidden" data-field="provider" value="${escapeHtml(provider)}">
-        <input type="hidden" data-field="providerId" value="${escapeHtml(providerId)}">
+    <div class="project-item border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
+        <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform duration-200 drawer-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <span class="font-medium text-gray-700 drawer-title">${escapeHtml(name) || 'Novo Projeto'}</span>
+            </div>
+            <button type="button" onclick="event.stopPropagation(); removeItem(this, 'project')"
+                class="text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+        </div>
+        <div class="drawer-content p-4 border-t border-gray-200">
+            <input type="hidden" data-field="provider" value="${escapeHtml(provider)}">
+            <input type="hidden" data-field="providerId" value="${escapeHtml(providerId)}">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input type="text" data-field="name" value="${escapeHtml(name)}" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
-                <input type="text" data-field="tags" value="${escapeHtml(tags)}" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg">${escapeHtml(description)}</textarea>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
-                <input type="url" data-field="repoUrl" value="${repoUrl}" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
-                <input type="url" data-field="liveUrl" value="${liveUrl}" class="w-full p-2 border border-gray-300 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                    <input type="text" data-field="name" value="${escapeHtml(name)}" oninput="updateDrawerTitle(this)" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+                    <input type="text" data-field="tags" value="${escapeHtml(tags)}" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg">${escapeHtml(description)}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
+                    <input type="url" data-field="repoUrl" value="${repoUrl}" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
+                    <input type="url" data-field="liveUrl" value="${liveUrl}" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
             </div>
         </div>
-        <button type="button" onclick="removeItem(this, 'project')" class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
     </div>
 `;
     container.insertAdjacentHTML('beforeend', html);
 }
+
 
 function addEducation() {
     const container = document.getElementById('educations-container');
     const html = `
-    <div class="education-item border border-gray-200 rounded-lg p-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
-                <input type="text" data-field="institution" class="w-full p-2 border border-gray-300 rounded-lg">
+    <div class="education-item border border-gray-200 rounded-lg overflow-hidden">
+        <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform duration-200 drawer-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <span class="font-medium text-gray-700 drawer-title">Nova Formação</span>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Grau</label>
-                <input type="text" data-field="degree" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Bacharelado, Mestrado...">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
-                <input type="text" data-field="field" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-                <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+            <button type="button" onclick="event.stopPropagation(); removeItem(this, 'education')"
+                class="text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+        </div>
+        <div class="drawer-content p-4 border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
+                    <input type="text" data-field="institution" oninput="updateDrawerTitle(this)" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Grau</label>
+                    <input type="text" data-field="degree" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Bacharelado, Mestrado...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                    <input type="text" data-field="field" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                    <input type="date" data-field="startDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                    <input type="date" data-field="endDate" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
             </div>
         </div>
-        <button type="button" onclick="removeItem(this, 'education')" class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
     </div>
 `;
     container.insertAdjacentHTML('beforeend', html);
 }
+
 
 
 function sendFormData(data) {

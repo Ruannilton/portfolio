@@ -163,51 +163,59 @@
         <h3 class="text-lg font-bold text-gray-800 mb-4">💼 Experiências</h3>
         <div id="experiences-container" class="space-y-4">
             {{range $i, $exp := .Experiences}}
-            <div class="experience-item border border-gray-200 rounded-lg p-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                        <input type="text" data-field="company" value="{{$exp.Company}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
+            <div class="experience-item border border-gray-200 rounded-lg overflow-hidden">
+                <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform duration-200 drawer-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="font-medium text-gray-700 drawer-title">{{if $exp.Company}}{{$exp.Company}}{{else}}Nova Experiência{{end}}</span>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
-                        <input type="text" data-field="role" value="{{$exp.Role}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-                        <input type="date" data-field="startDate" value="{{formatDate $exp.StartDate}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 items-end">
-                         <div class="flex items-center h-full">
-                            <label class="block text-sm font-medium text-gray-700 flex items-center">
-                                Trabalha Aqui
-                            </label>
-                            <input type="checkbox" data-field="workingHere" 
-                            class="mr-2 leading-tight" {{if not $exp.EndDate}}checked{{end}}>
+                    <button type="button" onclick="event.stopPropagation(); removeItem(this, 'experience')"
+                        class="text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+                </div>
+                <div class="drawer-content p-4 border-t border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                            <input type="text" data-field="company" value="{{$exp.Company}}" oninput="updateDrawerTitle(this)"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                            <input type="date" data-field="endDate" value="{{formatDatePtr $exp.EndDate}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                            <input type="text" data-field="role" value="{{$exp.Role}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                            <input type="date" data-field="startDate" value="{{formatDate $exp.StartDate}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 items-end">
+                             <div class="flex items-center h-full">
+                                <label class="block text-sm font-medium text-gray-700 flex items-center">
+                                    Trabalha Aqui
+                                </label>
+                                <input type="checkbox" data-field="workingHere" 
+                                class="mr-2 leading-tight" {{if not $exp.EndDate}}checked{{end}}>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                                <input type="date" data-field="endDate" value="{{formatDatePtr $exp.EndDate}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                            <textarea data-field="description" rows="2"
+                                class="w-full p-2 border border-gray-300 rounded-lg">{{$exp.Description}}</textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por
+                                vírgula)</label>
+                            <input type="text" data-field="techStack" value="{{join " , " $exp.TechStack}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
                         </div>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                        <textarea data-field="description" rows="2"
-                            class="w-full p-2 border border-gray-300 rounded-lg">{{$exp.Description}}</textarea>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por
-                            vírgula)</label>
-                        <input type="text" data-field="techStack" value="{{join " , " $exp.TechStack}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
                 </div>
-                <button type="button" onclick="removeItem(this, 'experience')"
-                    class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
             </div>
             {{end}}
         </div>
@@ -225,38 +233,46 @@
 
         <div id="projects-container" class="space-y-4">
             {{range $i, $proj := .Projects}}
-            <div class="project-item border border-gray-200 rounded-lg p-4">
-                <input type="hidden" data-field="provider" value="{{if $proj.Provider}}{{$proj.Provider}}{{end}}">
-                <input type="hidden" data-field="providerId" value="{{if $proj.ProviderId}}{{$proj.ProviderId}}{{end}}">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                        <input type="text" data-field="name" value="{{$proj.Name}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
+            <div class="project-item border border-gray-200 rounded-lg overflow-hidden">
+                <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform duration-200 drawer-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="font-medium text-gray-700 drawer-title">{{if $proj.Name}}{{$proj.Name}}{{else}}Novo Projeto{{end}}</span>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
-                        <input type="text" data-field="tags" value="{{join " , " $proj.Tags}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                        <textarea data-field="description" rows="2"
-                            class="w-full p-2 border border-gray-300 rounded-lg">{{$proj.Description}}</textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
-                        <input type="url" data-field="repoUrl" value="{{$proj.RepoURL}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
-                        <input type="url" data-field="liveUrl" value="{{$proj.LiveURL}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
+                    <button type="button" onclick="event.stopPropagation(); removeItem(this, 'project')"
+                        class="text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+                </div>
+                <div class="drawer-content p-4 border-t border-gray-200">
+                    <input type="hidden" data-field="provider" value="{{if $proj.Provider}}{{$proj.Provider}}{{end}}">
+                    <input type="hidden" data-field="providerId" value="{{if $proj.ProviderId}}{{$proj.ProviderId}}{{end}}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                            <input type="text" data-field="name" value="{{$proj.Name}}" oninput="updateDrawerTitle(this)"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+                            <input type="text" data-field="tags" value="{{join " , " $proj.Tags}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                            <textarea data-field="description" rows="2"
+                                class="w-full p-2 border border-gray-300 rounded-lg">{{$proj.Description}}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
+                            <input type="url" data-field="repoUrl" value="{{$proj.RepoURL}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
+                            <input type="url" data-field="liveUrl" value="{{$proj.LiveURL}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
                     </div>
                 </div>
-                <button type="button" onclick="removeItem(this, 'project')"
-                    class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
             </div>
             {{end}}
         </div>
@@ -272,42 +288,50 @@
         <h3 class="text-lg font-bold text-gray-800 mb-4">🎓 Formação</h3>
         <div id="educations-container" class="space-y-4">
             {{range $i, $edu := .Educations}}
-            <div class="education-item border border-gray-200 rounded-lg p-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
-                        <input type="text" data-field="institution" value="{{$edu.Institution}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
+            <div class="education-item border border-gray-200 rounded-lg overflow-hidden">
+                <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform duration-200 drawer-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="font-medium text-gray-700 drawer-title">{{if $edu.Institution}}{{$edu.Institution}}{{else}}Nova Formação{{end}}</span>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Grau</label>
-                        <input type="text" data-field="degree" value="{{$edu.Degree}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Bacharelado, Mestrado...">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
-                        <input type="text" data-field="field" value="{{$edu.Field}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-                        <input type="date" data-field="startDate" value="{{formatDate $edu.StartDate}}"
-                            class="w-full p-2 border border-gray-300 rounded-lg">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 items-end">
-                        <div class="flex items-center h-full">
-                            <label class="block text-sm font-medium text-gray-700 flex items-center">Cursando</label>
-                            <input type="checkbox" data-field="studyingHere" class="mr-2 leading-tight" {{if not $edu.EndDate}}checked{{end}}>
+                    <button type="button" onclick="event.stopPropagation(); removeItem(this, 'education')"
+                        class="text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
+                </div>
+                <div class="drawer-content p-4 border-t border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
+                            <input type="text" data-field="institution" value="{{$edu.Institution}}" oninput="updateDrawerTitle(this)"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                            <input type="date" data-field="endDate" value="{{formatDatePtr $edu.EndDate}}"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grau</label>
+                            <input type="text" data-field="degree" value="{{$edu.Degree}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Bacharelado, Mestrado...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                            <input type="text" data-field="field" value="{{$edu.Field}}"
                                 class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+                            <input type="date" data-field="startDate" value="{{formatDate $edu.StartDate}}"
+                                class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 items-end">
+                            <div class="flex items-center h-full">
+                                <label class="block text-sm font-medium text-gray-700 flex items-center">Cursando</label>
+                                <input type="checkbox" data-field="studyingHere" class="mr-2 leading-tight" {{if not $edu.EndDate}}checked{{end}}>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                                <input type="date" data-field="endDate" value="{{formatDatePtr $edu.EndDate}}"
+                                    class="w-full p-2 border border-gray-300 rounded-lg">
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button type="button" onclick="removeItem(this, 'education')"
-                    class="mt-2 text-red-600 hover:text-red-800 text-sm">🗑️ Remover</button>
             </div>
             {{end}}
         </div>
