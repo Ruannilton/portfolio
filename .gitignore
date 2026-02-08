@@ -24,6 +24,7 @@ tmp/
 
 # .env file
 .env
+.dev.env
 
 # Project build
 main
