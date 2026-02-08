@@ -121,7 +121,7 @@ function addExperience() {
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                    <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                    <textarea data-field="description" rows="6" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tech Stack (separado por vírgula)</label>
@@ -196,7 +196,7 @@ function addProject(data = null) {
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                    <textarea data-field="description" rows="2" class="w-full p-2 border border-gray-300 rounded-lg">${escapeHtml(description)}</textarea>
+                    <textarea data-field="description" rows="6" class="w-full p-2 border border-gray-300 rounded-lg">${escapeHtml(description)}</textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">URL do Repositório</label>
