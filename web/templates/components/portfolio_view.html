@@ -106,25 +106,27 @@
         <h3 class="text-lg font-bold text-gray-800 mb-4">🚀 Projetos</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {{range .Projects}}
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <h4 class="font-semibold text-gray-800">{{.Name}}</h4>
-                <p class="text-gray-600 text-sm mt-1">{{.Description}}</p>
-                {{if .Tags}}
-                <div class="flex flex-wrap gap-1 mt-2">
-                    {{range .Tags}}
-                    <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">{{.}}</span>
-                    {{end}}
-                </div>
+                {{if .ShowOnPortfolio}}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <h4 class="font-semibold text-gray-800">{{.Name}}</h4>
+                        <p class="text-gray-600 text-sm mt-1">{{.Description}}</p>
+                        {{if .Tags}}
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            {{range .Tags}}
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">{{.}}</span>
+                            {{end}}
+                        </div>
+                        {{end}}
+                        <div class="flex gap-3 mt-3">
+                            {{if .RepoURL}}
+                            <a href="{{.RepoURL}}" target="_blank" class="text-sm text-blue-600 hover:underline">📂 Repositório</a>
+                            {{end}}
+                            {{if .LiveURL}}
+                            <a href="{{.LiveURL}}" target="_blank" class="text-sm text-green-600 hover:underline">🌐 Demo</a>
+                            {{end}}
+                        </div>
+                    </div>
                 {{end}}
-                <div class="flex gap-3 mt-3">
-                    {{if .RepoURL}}
-                    <a href="{{.RepoURL}}" target="_blank" class="text-sm text-blue-600 hover:underline">📂 Repositório</a>
-                    {{end}}
-                    {{if .LiveURL}}
-                    <a href="{{.LiveURL}}" target="_blank" class="text-sm text-green-600 hover:underline">🌐 Demo</a>
-                    {{end}}
-                </div>
-            </div>
             {{end}}
         </div>
     </div>

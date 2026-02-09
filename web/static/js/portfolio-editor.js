@@ -170,7 +170,8 @@ function addProject(data = null) {
     // NOVOS VALORES
     const provider = data ? (data.provider || '') : '';
     const providerId = data ? (data.providerId || '') : '';
-
+    const showOnPortfolio = data ? (data.showOnPortfolio || false) : false;
+    const showOnResume = data ? (data.showOnResume || false) : false;
     const html = `
     <div class="project-item border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
         <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleItemDrawer(this)">
@@ -205,6 +206,14 @@ function addProject(data = null) {
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">URL Demo</label>
                     <input type="url" data-field="liveUrl" value="${liveUrl}" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Exibir no portfolio</label>
+                    <input type="checkbox" data-field="showOnPortfolio" class="mr-2 leading-tight" value=${showOnPortfolio}>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Exibir no currículo</label>
+                    <input type="checkbox" data-field="showOnResume" class="mr-2 leading-tight" value=${showOnResume}>
                 </div>
             </div>
         </div>
@@ -349,7 +358,9 @@ function prepareFormData(form) {
             liveUrl: item.querySelector('[data-field="liveUrl"]').value,
             tags: item.querySelector('[data-field="tags"]').value.split(',').map(s => s.trim()).filter(s => s),
             provider: providerVal || null,
-            providerId: providerIdVal || null
+            providerId: providerIdVal || null,
+            showOnPortfolio: item.querySelector('[data-field="showOnPortfolio"]').checked,
+            showOnResume: item.querySelector('[data-field="showOnResume"]').checked
         };
         if (proj.name) data.projects.push(proj);
     });
