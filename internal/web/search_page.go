@@ -26,12 +26,12 @@ func (m *WebModule) searchResultHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func RenderSearchPage(w http.ResponseWriter) error {
-	tmpl, err := web.ParseTemplate("pages/search_page.html", "profile_search_query_builder_form.html")
+	tmpl, err := web.ParseTemplateHtml("pages/search_page.html", "profile_search_query_builder_form.html")
 	if err != nil {
 		log.Printf("Error parsing search page template: %v", err)
 		return err
 	}
-	
+
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "base", nil); err != nil {
 		return err
@@ -49,7 +49,7 @@ func RenderPortfolioSearchResults(ctx context.Context, w http.ResponseWriter, qu
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplateFragment("components/profile_search_response_card.html")
+	tmpl, err := web.ParseTemplateFragmentHtml("components/profile_search_response_card.html")
 	if err != nil {
 		log.Printf("Error parsing search results template: %v", err)
 		return err

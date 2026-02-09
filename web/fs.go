@@ -2,7 +2,8 @@ package web
 
 import (
 	"embed"
-	"html/template"
+	htmlTemplate "html/template"
+	textTemplate "text/template"
 	"io/fs"
 	"net/http"
 	"strings"
@@ -13,7 +14,7 @@ import (
 var EFS embed.FS
 
 // FuncMap com funções customizadas para templates
-var templateFuncs = template.FuncMap{
+var templateFuncs = map[string]any{
 	"formatMonthYear": func(t time.Time) string {
 		return t.Format("Jan 2006")
 	},
@@ -71,8 +72,8 @@ func GetStaticAssets() http.FileSystem {
 	return http.FS(f)
 }
 
-// ParseTemplate ajuda a parsear templates com layout base e componentes
-func ParseTemplate(page string, components ...string) (*template.Template, error) {
+// ParseTemplateHtml ajuda a parsear templates com layout base e componentes
+func ParseTemplateHtml(page string, components ...string) (*htmlTemplate.Template, error) {
 	patterns := []string{
 		"templates/layouts/base.html",
 		"templates/" + page,
@@ -81,14 +82,22 @@ func ParseTemplate(page string, components ...string) (*template.Template, error
 	for _, comp := range components {
 		patterns = append(patterns, "templates/components/"+comp)
 	}
-	return template.New("base.html").Funcs(templateFuncs).ParseFS(EFS, patterns...)
+	return htmlTemplate.New("base.html").Funcs(htmlTemplate.FuncMap(templateFuncs)).ParseFS(EFS, patterns...)
 }
 
-// ParseTemplateFragment parseia templates de fragmentos (sem layout base)
-func ParseTemplateFragment(templates ...string) (*template.Template, error) {
+// ParseTemplateFragmentHtml parseia templates de fragmentos (sem layout base)
+func ParseTemplateFragmentHtml(templates ...string) (*htmlTemplate.Template, error) {
 	paths := make([]string, len(templates))
 	for i, t := range templates {
 		paths[i] = "templates/" + t
 	}
-	return template.New("fragment").Funcs(templateFuncs).ParseFS(EFS, paths...)
+	return htmlTemplate.New("fragment").Funcs(htmlTemplate.FuncMap(templateFuncs)).ParseFS(EFS, paths...)
+}
+
+func ParseTemplateFragmentMarkdown(templates ...string) (*textTemplate.Template, error) {
+	paths := make([]string, len(templates))
+	for i, t := range templates {
+		paths[i] = "templates/" + t
+	}
+	return textTemplate.New("markdown").Funcs(textTemplate.FuncMap(templateFuncs)).ParseFS(EFS, paths...)
 }

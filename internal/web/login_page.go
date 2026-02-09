@@ -27,14 +27,14 @@ func (m *WebModule) loginPageEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func  RenderLoginPage(w io.Writer) error {
+func RenderLoginPage(w io.Writer) error {
 
-	tmpl, err := web.ParseTemplate("pages/login.html")
+	tmpl, err := web.ParseTemplateHtml("pages/login.html")
 	if err != nil {
 		log.Printf("Error parsing login template: %v", err)
 		return err
 	}
-	
+
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "base", nil); err != nil {
 		return err

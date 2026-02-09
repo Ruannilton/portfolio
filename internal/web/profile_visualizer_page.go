@@ -20,11 +20,18 @@ func (m *WebModule) publicProfileHandler(w http.ResponseWriter, r *http.Request)
 	m.webService.RenderPublicProfilePage(ctx, w, profileID)
 }
 
-func (m *WebModule) portfolioPrintHandler(w http.ResponseWriter, r *http.Request) {
+func (m *WebModule) portfolioPrintHtmlHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	profileID := vars["profile_id"]
 	ctx := r.Context()
-	m.webService.RenderPortfolioPrint(ctx, w, profileID)
+	m.webService.RenderPortfolioHtmlPrint(ctx, w, profileID)
+}
+
+func (m *WebModule) portfolioPrintMarkdownHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	profileID := vars["profile_id"]	
+	ctx := r.Context()
+	m.webService.RenderPortfolioMarkdown(ctx, w, profileID)
 }
 
 func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.ResponseWriter, profileID string) {
@@ -73,7 +80,7 @@ func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.Re
 	viewData.FromProfile(profile)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplate("pages/show_profile.html", "top_bar.html", "portfolio_view.html")
+	tmpl, err := web.ParseTemplateHtml("pages/show_profile.html", "top_bar.html", "portfolio_view.html")
 	if err != nil {
 		log.Printf("Error parsing show_profile template: %v", err)
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
@@ -89,7 +96,7 @@ func (module *WebService) RenderPublicProfilePage(ctx context.Context, w http.Re
 	buf.WriteTo(w)
 }
 
-func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.ResponseWriter, profileID string) {
+func (module *WebService) RenderPortfolioHtmlPrint(ctx context.Context, w http.ResponseWriter, profileID string) {
 	profile, err := module.portfolioService.GetProfile(ctx, profileID)
 	if err != nil {
 		if errors.Is(err, portfolio.ErrProfileNotFound) {
@@ -122,7 +129,7 @@ func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.Respo
 	viewData.FromProfile(profile)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplateFragment("pages/print_portfolio.html")
+	tmpl, err := web.ParseTemplateFragmentHtml("print/print_portfolio.html")
 	if err != nil {
 		log.Printf("Error parsing print_portfolio template: %v", err)
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
@@ -136,4 +143,8 @@ func (module *WebService) RenderPortfolioPrint(ctx context.Context, w http.Respo
 		return
 	}
 	buf.WriteTo(w)
+}
+
+func (module *WebService) RenderPortfolioMarkdown(ctx context.Context, w http.ResponseWriter, profileID string) {
+	// TODO
 }

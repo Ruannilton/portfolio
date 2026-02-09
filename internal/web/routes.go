@@ -48,7 +48,7 @@ func (m *WebModule) SetupFrontEnd(router *mux.Router) {
 
 	// Página pública de visualização de perfil
 	router.HandleFunc("/app/profile/{profile_id}", m.optionalAuth(m.publicProfileHandler)).Methods("GET")
-	router.HandleFunc("/app/profile/{profile_id}/print", m.portfolioPrintHandler).Methods("GET")
+	router.HandleFunc("/app/profile/{profile_id}/print", m.portfolioPrintHtmlHandler).Methods("GET")
 
 }
 

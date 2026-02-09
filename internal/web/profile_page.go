@@ -63,7 +63,7 @@ func (module *WebService) RenderAppPage(ctx context.Context, w io.Writer) error 
 		viewData.FromProfile(profile)
 	}
 
-	tmpl, err := web.ParseTemplate("pages/my_profile.html", "top_bar.html", "portfolio_view.html", "portfolio_editor.html")
+	tmpl, err := web.ParseTemplateHtml("pages/my_profile.html", "top_bar.html", "portfolio_view.html", "portfolio_editor.html")
 	if err != nil {
 		log.Printf("Error parsing my_profile template: %v", err)
 		return err
@@ -138,7 +138,7 @@ func (module *WebService) UpdatePortfolioFragment(ctx context.Context, w http.Re
 
 func (module *WebService) renderProfileContent(w http.ResponseWriter, profile *portfolio.Profile) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tmpl, err := web.ParseTemplateFragment("components/portfolio_view.html")
+	tmpl, err := web.ParseTemplateFragmentHtml("components/portfolio_view.html")
 	if err != nil {
 		log.Printf("Error parsing portfolio_view template: %v", err)
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
