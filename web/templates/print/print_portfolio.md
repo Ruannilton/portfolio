@@ -1,3 +1,4 @@
+{{define "markdown"}}
 # {{.Headline}}
 
 {{if .OpenToWork}}**Status:** Aberto a propostas 🟢{{end}}
@@ -59,3 +60,4 @@
 
 ---
 *Gerado em {{currentDate}} via DevPortfolio*
+{{end}}

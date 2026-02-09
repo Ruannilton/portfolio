@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"html/template"
 	"log"
 	"net/http"
 	"portfolio/internal/jwt"
@@ -146,5 +147,72 @@ func (module *WebService) RenderPortfolioHtmlPrint(ctx context.Context, w http.R
 }
 
 func (module *WebService) RenderPortfolioMarkdown(ctx context.Context, w http.ResponseWriter, profileID string) {
-	// TODO
+	profile, err := module.portfolioService.GetProfile(ctx, profileID)
+	if err != nil {
+		if errors.Is(err, portfolio.ErrProfileNotFound) {
+			http.Error(w, "Portfolio não encontrado", http.StatusNotFound)
+			return
+		}
+		log.Printf("RenderPortfolioMarkdown error: %v", err)
+		http.Error(w, "Falha ao carregar portfolio", http.StatusInternalServerError)
+		return
+	}
+
+	profileOwner, err := module.authService.GetUserByID(ctx, profile.UserID)
+	if err != nil {
+		log.Printf("RenderPortfolioMarkdown error fetching user: %v", err)
+		http.Error(w, "Falha ao carregar dados do usuário", http.StatusInternalServerError)
+		return
+	}
+
+	viewData := PageViewData{
+		PageTitle:      profileOwner.FirstName + " " + profileOwner.LastName,
+		OwnerFirstName: profileOwner.FirstName,
+		OwnerLastName:  profileOwner.LastName,
+		ProfileExists:  true,
+	}
+
+	if profileOwner.ProfileImage != nil {
+		viewData.OwnerProfileImage = *profileOwner.ProfileImage
+	}
+
+	viewData.FromProfile(profile)
+
+	// 1. Renderizar o Markdown em si
+	mdTmpl, err := web.ParseTemplateFragmentMarkdown("print/print_portfolio.md")
+	if err != nil {
+		log.Printf("Error parsing markdown template: %v", err)
+		http.Error(w, "Failed to render markdown", http.StatusInternalServerError)
+		return
+	}
+
+	var mdBuf bytes.Buffer
+	if err := mdTmpl.ExecuteTemplate(&mdBuf, "markdown", viewData); err != nil {
+		log.Printf("Error executing markdown template: %v", err)
+		http.Error(w, "Failed to render markdown", http.StatusInternalServerError)
+		return
+	}
+
+	// 2. Renderizar a página HTML que mostra o markdown
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	htmlTmpl, err := web.ParseTemplateFragmentHtml("print/view_markdown.html")
+	if err != nil {
+		log.Printf("Error parsing markdown view template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		MarkdownContent template.HTML
+	}{
+		MarkdownContent: template.HTML(mdBuf.String()),
+	}
+
+	var buf bytes.Buffer
+	if err := htmlTmpl.ExecuteTemplate(&buf, "markdown_view", data); err != nil {
+		log.Printf("Error executing markdown view template: %v", err)
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		return
+	}
+	buf.WriteTo(w)
 }
