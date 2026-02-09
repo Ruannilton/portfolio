@@ -386,29 +386,31 @@
         <h2 class="section-title">Projetos</h2>
         <div class="projects-grid">
             {{range .Projects}}
-            <div class="project-item">
-                <div class="project-name">{{.Name}}</div>
-                {{if .Description}}
-                <p class="project-description">{{.Description}}</p>
+                {{if .ShowOnResume}}
+                    <div class="project-item">
+                        <div class="project-name">{{.Name}}</div>
+                        {{if .Description}}
+                        <p class="project-description">{{.Description}}</p>
+                        {{end}}
+                        {{if .Tags}}
+                        <div class="project-tags">
+                            {{range .Tags}}
+                            <span class="project-tag">{{.}}</span>
+                            {{end}}
+                        </div>
+                        {{end}}
+                        {{if or .RepoURL .LiveURL}}
+                        <div class="project-links">
+                            {{if .RepoURL}}
+                            <a href="{{.RepoURL}}">Repositório</a>
+                            {{end}}
+                            {{if .LiveURL}}
+                            <a href="{{.LiveURL}}">Demo</a>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
                 {{end}}
-                {{if .Tags}}
-                <div class="project-tags">
-                    {{range .Tags}}
-                    <span class="project-tag">{{.}}</span>
-                    {{end}}
-                </div>
-                {{end}}
-                {{if or .RepoURL .LiveURL}}
-                <div class="project-links">
-                    {{if .RepoURL}}
-                    <a href="{{.RepoURL}}">Repositório</a>
-                    {{end}}
-                    {{if .LiveURL}}
-                    <a href="{{.LiveURL}}">Demo</a>
-                    {{end}}
-                </div>
-                {{end}}
-            </div>
             {{end}}
         </div>
     </section>

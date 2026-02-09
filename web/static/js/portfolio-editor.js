@@ -4,39 +4,6 @@
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-// htmx.defineExtension('submit-json', {
-//     onEvent: function (name, evt) {
-//         if (name === "htmx:configRequest") {
-//             evt.detail.headers['Content-Type'] = "application/json";
-//         }
-//     },
-//     encodeParameters: function(xhr, parameters, elt) {
-//         xhr.overrideMimeType('text/json');
-//         // Garante que o JSON seja gerado exatamente como o objeto está,
-//         // sem tentar converter valores para string antes.
-//         return JSON.stringify(parameters);
-//     }
-// });
-
-// document.body.addEventListener('htmx:configRequest', function(evt) {
-//     // Verifica se é o formulário de perfil pelo endpoint ou ID
-//     if (evt.target.getAttribute('hx-put') === '/app/profile') {
-
-//         // 1. Pega o elemento formulário
-//         const form = evt.target;
-
-//         // 2. Chama sua função para gerar o JSON limpo
-//         const complexData = prepareFormData(form);
-
-//         // 3. Sobrescreve os parâmetros que o HTMX enviaria.
-//         // Como você está usando hx-ext="json-enc", ele vai pegar esse objeto
-//         // e serializar automaticamente para JSON no corpo da requisição.
-//         evt.detail.parameters = complexData;
-
-//         // Debug opcional: verifique no console o que está indo
-//         console.log("Enviando JSON customizado:", complexData);
-//     }
-// });
 
 function showCreateForm() {
     document.getElementById('portfolio-edit').classList.remove('hidden');
